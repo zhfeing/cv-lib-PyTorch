@@ -5,7 +5,7 @@ from typing import Callable
 import multiprocessing as mp
 
 
-class MultiProcessLogger:
+class MultiProcessLoggerListener:
     """
     Using a independent process to write logger, suitable for multiprocess logging.
     One can use queue handler to write log from other process, e.g.
@@ -17,12 +17,13 @@ class MultiProcessLogger:
         logger.setLevel(logging.DEBUG)
     ```
     """
-    def __init__(self, logger_constructor: Callable[[], logging.Logger]):
+    def __init__(self, logger_constructor: Callable[[], logging.Logger], mp_context="spawn"):
         """
         Args:
             logger_constructor: function to create root logger
         """
-        self._queue = mp.Queue(-1)
+        mmp = mp.get_context(mp_context)
+        self._queue = mmp.Queue(-1)
         self._logger_constructor = logger_constructor
         self.listener = mp.Process(target=self.listen, name="listener")
         self.listener.start()
@@ -59,3 +60,12 @@ class MultiProcessLogger:
         """
         self.listener.join()
 
+    def get_logger(self, name: str = None, level: int = logging.INFO):
+        logger = logging.getLogger(name)
+        handler = logging.handlers.QueueHandler(self._queue)
+        logger.addHandler(handler)
+        logger.setLevel(level)
+        return logger
+
+    def __del__(self):
+        self.stop()

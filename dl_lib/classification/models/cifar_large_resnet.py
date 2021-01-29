@@ -1,12 +1,15 @@
-'''ResNet in PyTorch.
-For Pre-activation ResNet, see 'preact_resnet.py'.
-Reference:
-[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
-    Deep Residual Learning for Image Recognition. arXiv:1512.03385
-'''
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+__all__ = [
+    "ResNet_CL",
+    "resnet18_cl",
+    "resnet34_cl",
+    "resnet50_cl",
+    "resnet101_cl",
+    "resnet152_cl"
+]
 
 
 class BasicBlock(nn.Module):
@@ -72,9 +75,16 @@ class Bottleneck(nn.Module):
             return out
 
 
-class ResNet(nn.Module):
+class ResNet_CL(nn.Module):
+    """
+    Resnet for cifar dataset (large version).
+
+    @ Different from PyTorch version `in ()`:
+        1. First conv layer has kernel size of 3 (7) and stride 1 (2)
+        2. Using non-inplace relu for feature extracting
+    """
     def __init__(self, block, num_blocks, num_classes=10, zero_init_residual=False):
-        super(ResNet, self).__init__()
+        super(ResNet_CL, self).__init__()
         self.in_planes = 64
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -88,7 +98,7 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -125,7 +135,7 @@ class ResNet(nn.Module):
             bn3 = self.layer3[-1].bn2
             bn4 = self.layer4[-1].bn2
         else:
-            raise NotImplementedError('ResNet unknown block error !!!')
+            raise NotImplementedError("ResNet unknown block error !!!")
 
         return [bn1, bn2, bn3, bn4]
 
@@ -162,37 +172,22 @@ class ResNet(nn.Module):
             return out
 
 
-def ResNet18(**kwargs):
-    return ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+def resnet18_cl(**kwargs):
+    return ResNet_CL(BasicBlock, [2, 2, 2, 2], **kwargs)
 
 
-def ResNet34(**kwargs):
-    return ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
+def resnet34_cl(**kwargs):
+    return ResNet_CL(BasicBlock, [3, 4, 6, 3], **kwargs)
 
 
-def ResNet50(**kwargs):
-    return ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+def resnet50_cl(**kwargs):
+    return ResNet_CL(Bottleneck, [3, 4, 6, 3], **kwargs)
 
 
-def ResNet101(**kwargs):
-    return ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+def resnet101_cl(**kwargs):
+    return ResNet_CL(Bottleneck, [3, 4, 23, 3], **kwargs)
 
 
-def ResNet152(**kwargs):
-    return ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
+def resnet152_cl(**kwargs):
+    return ResNet_CL(Bottleneck, [3, 8, 36, 3], **kwargs)
 
-
-if __name__ == '__main__':
-    net = ResNet18(num_classes=100)
-    x = torch.randn(2, 3, 32, 32)
-    feats, logit = net(x, is_feat=True, preact=True)
-
-    for f in feats:
-        print(f.shape, f.min().item())
-    print(logit.shape)
-
-    for m in net.get_bn_before_relu():
-        if isinstance(m, nn.BatchNorm2d):
-            print('pass')
-        else:
-            print('warning')

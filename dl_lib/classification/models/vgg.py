@@ -1,23 +1,19 @@
-'''VGG for CIFAR10. FC layers are removed.
-(c) YANG, Wei
-'''
 import torch.nn as nn
 import torch.nn.functional as F
 import math
 
 
 __all__ = [
-    'VGG', 'vgg11', 'vgg11_bn', 'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn',
-    'vgg19_bn', 'vgg19',
+    "VGG",
+    "vgg11",
+    "vgg11_bn",
+    "vgg13",
+    "vgg13_bn",
+    "vgg16",
+    "vgg16_bn",
+    "vgg19_bn",
+    "vgg19",
 ]
-
-
-model_urls = {
-    'vgg11': 'https://download.pytorch.org/models/vgg11-bbd30ac9.pth',
-    'vgg13': 'https://download.pytorch.org/models/vgg13-c768596a.pth',
-    'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
-    'vgg19': 'https://download.pytorch.org/models/vgg19-dcbb9e9d.pth',
-}
 
 
 class VGG(nn.Module):
@@ -103,7 +99,7 @@ class VGG(nn.Module):
     def _make_layers(cfg, batch_norm=False, in_channels=3):
         layers = []
         for v in cfg:
-            if v == 'M':
+            if v == "M":
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
@@ -132,11 +128,11 @@ class VGG(nn.Module):
 
 
 cfg = {
-    'A': [[64], [128], [256, 256], [512, 512], [512, 512]],
-    'B': [[64, 64], [128, 128], [256, 256], [512, 512], [512, 512]],
-    'D': [[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]],
-    'E': [[64, 64], [128, 128], [256, 256, 256, 256], [512, 512, 512, 512], [512, 512, 512, 512]],
-    'S': [[64], [128], [256], [512], [512]],
+    "A": [[64], [128], [256, 256], [512, 512], [512, 512]],
+    "B": [[64, 64], [128, 128], [256, 256], [512, 512], [512, 512]],
+    "D": [[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]],
+    "E": [[64, 64], [128, 128], [256, 256, 256, 256], [512, 512, 512, 512], [512, 512, 512, 512]],
+    "S": [[64], [128], [256], [512], [512]],
 }
 
 
@@ -145,7 +141,7 @@ def vgg8(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['S'], **kwargs)
+    model = VGG(cfg["S"], **kwargs)
     return model
 
 
@@ -154,7 +150,7 @@ def vgg8_bn(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['S'], batch_norm=True, **kwargs)
+    model = VGG(cfg["S"], batch_norm=True, **kwargs)
     return model
 
 
@@ -163,13 +159,13 @@ def vgg11(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['A'], **kwargs)
+    model = VGG(cfg["A"], **kwargs)
     return model
 
 
 def vgg11_bn(**kwargs):
     """VGG 11-layer model (configuration "A") with batch normalization"""
-    model = VGG(cfg['A'], batch_norm=True, **kwargs)
+    model = VGG(cfg["A"], batch_norm=True, **kwargs)
     return model
 
 
@@ -178,13 +174,13 @@ def vgg13(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['B'], **kwargs)
+    model = VGG(cfg["B"], **kwargs)
     return model
 
 
 def vgg13_bn(**kwargs):
     """VGG 13-layer model (configuration "B") with batch normalization"""
-    model = VGG(cfg['B'], batch_norm=True, **kwargs)
+    model = VGG(cfg["B"], batch_norm=True, **kwargs)
     return model
 
 
@@ -193,13 +189,13 @@ def vgg16(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['D'], **kwargs)
+    model = VGG(cfg["D"], **kwargs)
     return model
 
 
 def vgg16_bn(**kwargs):
     """VGG 16-layer model (configuration "D") with batch normalization"""
-    model = VGG(cfg['D'], batch_norm=True, **kwargs)
+    model = VGG(cfg["D"], batch_norm=True, **kwargs)
     return model
 
 
@@ -208,29 +204,11 @@ def vgg19(**kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = VGG(cfg['E'], **kwargs)
+    model = VGG(cfg["E"], **kwargs)
     return model
 
 
 def vgg19_bn(**kwargs):
-    """VGG 19-layer model (configuration 'E') with batch normalization"""
-    model = VGG(cfg['E'], batch_norm=True, **kwargs)
+    """VGG 19-layer model (configuration "E") with batch normalization"""
+    model = VGG(cfg["E"], batch_norm=True, **kwargs)
     return model
-
-
-if __name__ == '__main__':
-    import torch
-
-    x = torch.randn(2, 3, 32, 32)
-    net = vgg19_bn(num_classes=100)
-    feats, logit = net(x, is_feat=True, preact=True)
-
-    for f in feats:
-        print(f.shape, f.min().item())
-    print(logit.shape)
-
-    for m in net.get_bn_before_relu():
-        if isinstance(m, nn.BatchNorm2d):
-            print('pass')
-        else:
-            print('warning')

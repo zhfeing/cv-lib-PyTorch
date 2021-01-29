@@ -3,11 +3,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-"""
-Original Author: Wei Yang
-"""
 
-__all__ = ['wrn']
+__all__ = [
+    "WideResNet",
+    "wrn",
+    "wrn_40_2",
+    "wrn_40_1",
+    "wrn_16_2",
+    "wrn_16_1"
+]
 
 
 class BasicBlock(nn.Module):
@@ -23,8 +27,8 @@ class BasicBlock(nn.Module):
                                padding=1, bias=False)
         self.droprate = dropRate
         self.equalInOut = (in_planes == out_planes)
-        self.convShortcut = (not self.equalInOut) and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
-                               padding=0, bias=False) or None
+        self.convShortcut = (not self.equalInOut) and nn.Conv2d(
+            in_planes, out_planes, kernel_size=1, stride=stride, padding=0, bias=False) or None
 
     def forward(self, x):
         if not self.equalInOut:
@@ -56,8 +60,8 @@ class NetworkBlock(nn.Module):
 class WideResNet(nn.Module):
     def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0):
         super(WideResNet, self).__init__()
-        nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
-        assert (depth - 4) % 6 == 0, 'depth should be 6n+4'
+        nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
+        assert (depth - 4) % 6 == 0, "depth should be 6n+4"
         n = (depth - 4) // 6
         block = BasicBlock
         # 1st conv before any network block
@@ -151,20 +155,3 @@ def wrn_16_1(**kwargs):
     model = WideResNet(depth=16, widen_factor=1, **kwargs)
     return model
 
-
-if __name__ == '__main__':
-    import torch
-
-    x = torch.randn(2, 3, 32, 32)
-    net = wrn_40_2(num_classes=100)
-    feats, logit = net(x, is_feat=True, preact=True)
-
-    for f in feats:
-        print(f.shape, f.min().item())
-    print(logit.shape)
-
-    for m in net.get_bn_before_relu():
-        if isinstance(m, nn.BatchNorm2d):
-            print('pass')
-        else:
-            print('warning')

@@ -1,48 +1,49 @@
 from typing import Dict
 
 import torch
+from torch.nn import Module
 
-from .resnet import resnet8, resnet14, resnet20, resnet32, resnet44, resnet56, resnet110, resnet8x4, resnet32x4
-from .resnetv2 import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
-from .wrn import wrn_16_1, wrn_16_2, wrn_40_1, wrn_40_2
-from .vgg import vgg19_bn, vgg16_bn, vgg13_bn, vgg11_bn, vgg8_bn
-from .mobilenetv2 import mobile_half
-from .ShuffleNetv1 import ShuffleV1
-from .ShuffleNetv2 import ShuffleV2
+from .resnet import *
+from .cifar_large_resnet import *
+from .cifar_small_resnet import *
+from .wrn import *
+from .vgg import *
+from .mobilenetv2 import *
+
 
 MODEL_DICT = {
-    'resnet8': resnet8,
-    'resnet14': resnet14,
-    'resnet20': resnet20,
-    'resnet32': resnet32,
-    'resnet44': resnet44,
-    'resnet56': resnet56,
-    'resnet110': resnet110,
-    'resnet8x4': resnet8x4,
-    'resnet32x4': resnet32x4,
-    'ResNet18': ResNet18,
-    'ResNet34': ResNet34,
-    'ResNet50': ResNet50,
-    'ResNet101': ResNet101,
-    'ResNet152': ResNet152,
-    'wrn_16_1': wrn_16_1,
-    'wrn_16_2': wrn_16_2,
-    'wrn_40_1': wrn_40_1,
-    'wrn_40_2': wrn_40_2,
-    'vgg8': vgg8_bn,
-    'vgg11': vgg11_bn,
-    'vgg13': vgg13_bn,
-    'vgg16': vgg16_bn,
-    'vgg19': vgg19_bn,
-    'MobileNetV2': mobile_half,
-    'ShuffleV1': ShuffleV1,
-    'ShuffleV2': ShuffleV2,
+    # small resnet for cifar
+    "resnet20_cs": resnet20_cs,
+    "resnet32_cs": resnet32_cs,
+    "resnet56_cs": resnet56_cs,
+    # large ResNet for cifar
+    "ResNet18_cl": resnet18_cl,
+    "ResNet34_cl": resnet34_cl,
+    "ResNet50_cl": resnet50_cl,
+    # ResNet for large scale dataset
+    "ResNet10": resnet10,
+    "ResNet18": resnet18,
+    "ResNet34": resnet34,
+    "ResNet50": resnet50,
+    "ResNet101": resnet101,
+    "ResNet152": resnet152,
+    # wide resnet
+    "wrn_16_1": wrn_16_1,
+    "wrn_16_2": wrn_16_2,
+    "wrn_40_1": wrn_40_1,
+    "wrn_40_2": wrn_40_2,
+    # vgg
+    "vgg11": vgg11_bn,
+    "vgg13": vgg13_bn,
+    "vgg16": vgg16_bn,
+    "vgg19": vgg19_bn,
+    # mobile net
+    "MobileNetV2": mobile_half,
 }
 
 
 def get_model(model_name: str, num_classes: int, state_dict: Dict[str, torch.Tensor] = None, **kwargs):
-    fn = MODEL_DICT[model_name]
-    model = fn(num_classes=num_classes, **kwargs)
+    model: Module = MODEL_DICT[model_name](num_classes=num_classes, **kwargs)
 
     if state_dict is not None:
         model.load_state_dict(state_dict)

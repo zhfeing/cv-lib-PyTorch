@@ -1,1 +1,1 @@
-from .logger import MultiProcessLogger
+from .logger import MultiProcessLoggerListener

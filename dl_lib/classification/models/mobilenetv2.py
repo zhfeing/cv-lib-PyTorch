@@ -3,11 +3,14 @@ MobileNetV2 implementation used in
 <Knowledge Distillation via Route Constrained Optimization>
 """
 
-import torch
 import torch.nn as nn
 import math
 
-__all__ = ['mobilenetv2_T_w', 'mobile_half']
+
+__all__ = [
+    "MobileNetV2",
+    "mobile_half"
+]
 
 BN = None
 
@@ -51,7 +54,7 @@ class InvertedResidual(nn.Module):
             nn.Conv2d(inp * expand_ratio, oup, 1, 1, 0, bias=False),
             nn.BatchNorm2d(oup),
         )
-        self.names = ['0', '1', '2', '3', '4', '5', '6', '7']
+        self.names = ["0", "1", "2", "3", "4", "5", "6", "7"]
 
     def forward(self, x):
         t = x
@@ -181,21 +184,3 @@ def mobilenetv2_T_w(T, W, feature_dim=100):
 
 def mobile_half(num_classes):
     return mobilenetv2_T_w(6, 0.5, num_classes)
-
-
-if __name__ == '__main__':
-    x = torch.randn(2, 3, 32, 32)
-
-    net = mobile_half(100)
-
-    feats, logit = net(x, is_feat=True, preact=True)
-    for f in feats:
-        print(f.shape, f.min().item())
-    print(logit.shape)
-
-    for m in net.get_bn_before_relu():
-        if isinstance(m, nn.BatchNorm2d):
-            print('pass')
-        else:
-            print('warning')
-
