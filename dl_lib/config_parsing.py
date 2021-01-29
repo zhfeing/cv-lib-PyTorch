@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from torch.utils.tensorboard import SummaryWriter
 
-from basic.utils import get_logger
+from .utils import get_logger
 
 
 def get_cfg(cfg_filepath: str) -> Dict[str, Any]:

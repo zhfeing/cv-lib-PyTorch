@@ -17,7 +17,7 @@ def get_logger(
     logger_fp: str,
     name: Optional[str] = None,
     mode: str = "w",
-    format: str = "%(asctime)s - %(funcName)s - %(levelname)s - %(message)s"
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 ):
     logger = logging.getLogger(name)
     logger.setLevel(level)
