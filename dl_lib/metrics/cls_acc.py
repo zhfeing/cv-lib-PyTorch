@@ -6,7 +6,7 @@ def accuracy(output: Tensor, target: Tensor, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
         maxk = max(topk)
-        batch_size = target.shape[0]
+        batch_size = target.size(0)
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
@@ -14,6 +14,6 @@ def accuracy(output: Tensor, target: Tensor, topk=(1,)):
 
         res = []
         for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(1 / batch_size))
+            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
+            res.append(correct_k.mul_(1.0 / batch_size))
         return res
