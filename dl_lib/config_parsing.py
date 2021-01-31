@@ -46,6 +46,7 @@ def get_train_logger(logdir: str, filename: str) -> logging.Logger:
             "training-" + filename + ".log"
         )
     )
+    logger.propagate = False
     return logger
 
 

@@ -5,9 +5,12 @@ from typing import Any
 from collections import OrderedDict
 import json
 import pickle
+import logging
 
 import numpy as np
 
+
+from torch.utils.data import DataLoader
 import torch
 from torchvision.datasets.folder import IMG_EXTENSIONS
 from torchvision.datasets.folder import has_file_allowed_extension
@@ -23,7 +26,8 @@ __all__ = [
     "to_json_str",
     "float_to_uint_image",
     "save_object",
-    "load_object"
+    "load_object",
+    "make_iter_dataloader"
 ]
 
 
@@ -66,6 +70,7 @@ def make_deterministic(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    # torch.set_deterministic(True)
     torch.backends.cudnn.deterministic = True
 
 
@@ -99,3 +104,14 @@ def save_object(obj: Any, fp: str):
 def load_object(fp: str) -> Any:
     with open(fp, "rb") as f:
         return pickle.load(f)
+
+
+def make_iter_dataloader(data_loader: DataLoader):
+    ep = 1
+    logger = logging.getLogger("make_iter_dataloader")
+    while True:
+        for data in data_loader:
+            yield data
+        logger.info("Epoch %d finished, start to iter next epoch", ep)
+        ep += 1
+

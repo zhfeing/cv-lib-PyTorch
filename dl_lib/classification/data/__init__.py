@@ -11,10 +11,10 @@ DATASET_DICT = {
     "cifar10": get_cifar_10,
     "cifar100": get_cifar_100,
     "imagenet": get_imagenet,
-    "tiny-imagenet": get_tiny_imagenet
+    "tiny-imagenet": get_tiny_imagenet,
 }
 
 
-def get_dataset(name: str, root: str, split: str = "train", **kwargs) -> Dataset:
+def get_dataset(name: str, root: str, split: str = "train") -> Dataset:
     fn = DATASET_DICT[name]
     return fn(root=root, split=split)
