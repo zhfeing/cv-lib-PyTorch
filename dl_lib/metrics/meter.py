@@ -1,7 +1,3 @@
-"""
-Modified from https://github.com/pytorch/tnt/blob/master/torchnet/meter/mapmeter.py
-"""
-
 import abc
 
 from torch import Tensor
