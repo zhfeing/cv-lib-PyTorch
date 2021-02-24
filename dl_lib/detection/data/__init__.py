@@ -1,46 +1,53 @@
-from .augmentation import get_composed_augmentations
+from typing import Callable, Dict, Any, Tuple
 from .dataloader import get_dataloader
 from .detection_dataset import DetectionDataset
 
 from .coco import CocoDetection
-from .voc import VOC2012Dataset, VOCPartialDataset
+from .voc import VOC0712Dataset, VOC2007Dataset
 
 
 __REGISTERED_DATASETS__ = {
     "COCO": CocoDetection,
-    "VOC2007": VOCPartialDataset,
-    # "VOC2012": VOC2012Dataset
+    "VOC2007": VOC2007Dataset,
+    "VOC2012": VOC0712Dataset
 }
 
 
-def get_dataset(cfg):
-    # Setup Augmentations
-    augmentation_list = cfg["training"].get("augmentations", list())
-    data_aug = get_composed_augmentations(augmentation_list)
-
+def get_dataset(
+    dataset_cfg: Dict[str, Any],
+    train_augmentations: Callable,
+    val_augmentations: Callable
+) -> Tuple[DetectionDataset, DetectionDataset, int]:
+    """
+    dataset_cfg:
+        {
+            dataset: name of dataset
+            root: dataset root path
+            train:
+                xxx: train configs
+            val:
+                xxx: val configs
+        }
+    """
     # Setup Dataloader
-    dataset = __REGISTERED_DATASETS__[cfg["data"]["dataset"]]
-    data_path = cfg["data"]["path"]
+    dataset = __REGISTERED_DATASETS__[dataset_cfg["name"]]
+    root = dataset_cfg["root"]
 
-    dataloader_args = cfg["data"].copy()
-    dataloader_args.pop('dataset')
-    dataloader_args.pop('train_split')
-    dataloader_args.pop('val_split')
-    dataloader_args.pop('path')
+    train_cfg = dataset_cfg["train"]
+    val_cfg = dataset_cfg["val"]
 
     train_dataset: DetectionDataset = dataset(
-        data_path,
-        split=cfg["data"]["train_split"],
-        augmentations=data_aug,
-        **dataloader_args
+        root,
+        augmentations=train_augmentations,
+        **train_cfg
     )
 
     val_dataset: DetectionDataset = dataset(
-        data_path,
-        split=cfg["data"]["val_split"],
-        **dataloader_args
+        root,
+        augmentations=val_augmentations,
+        **val_cfg
     )
 
-    assert(train_dataset.n_classes == val_dataset.n_classes)
+    assert train_dataset.n_classes == val_dataset.n_classes
     n_classes = train_dataset.n_classes
     return train_dataset, val_dataset, n_classes

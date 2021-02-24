@@ -5,9 +5,9 @@ from .aug import *
 
 
 __REGISTERED_AUGS__ = {
-    "RandomCrop": RandomCrop,
-    "RandomHorizontalFlip": RandomHorizontalFlip,
-    "ColorJitter": ColorJitter
+    # "RandomCrop": RandomCrop,
+    # "RandomHorizontalFlip": RandomHorizontalFlip,
+    # "ColorJitter": ColorJitter
 }
 
 

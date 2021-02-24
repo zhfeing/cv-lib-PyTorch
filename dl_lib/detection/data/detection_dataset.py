@@ -1,10 +1,10 @@
 import os
-from typing import Callable, Dict, Tuple, List, Any
+from typing import Callable, Dict, Tuple, List, Any, Optional
 
 from PIL.Image import Image
 
 import torch
-from torch import FloatTensor, LongTensor
+from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import pil_loader
 import torchvision.transforms.functional as TF
@@ -14,7 +14,7 @@ class DetectionDataset(Dataset):
     """
     Base Detection Dataset
 
-    Required:
+    Inhered Class Requirements:
         `img_sub_folder`: root folder to all images
         `images`: dict e.g. {img_id: [image_name, bboxes]},
             where bboxes: ((left, top, width, height), bbox_label), you should guardentee that
@@ -27,13 +27,13 @@ class DetectionDataset(Dataset):
     """
     def __init__(
             self,
-            resize: Tuple[int] = (300, 300),
-            augmentations: Callable[[Image, FloatTensor, LongTensor], Tuple[Image, FloatTensor, LongTensor]] = None,
+            resize: Optional[Tuple[int]] = (300, 300),
+            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
     ):
         """
         resize: (h, w)
         """
-        self.resize = resize
+        self.resize = tuple(resize) if isinstance(resize, list) else resize
         self.augmentations = augmentations
 
         self.img_sub_folder: str = None
@@ -54,9 +54,17 @@ class DetectionDataset(Dataset):
     def other_info(self, img_id: int) -> Dict[str, Any]:
         return dict()
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Tuple[Tensor, Dict[str, Any]]:
         """
-        Return image, image_id, img_size (hxw), list of bounding boxes and list of bounding box labels
+        Return image and target where target is a dictionary e.g.
+            target: {
+                image_id: str or int,
+                orig_size: original image size (h, w)
+                size: image size after transformation (h, w)
+                boxes: bounding box for each object in the image (x1, y1, x2, y2)
+                labels: label for each bounding box
+                (expand to dict) OTHER_INFO: other information from inhered class `other_info(img_id)`
+            }
         Guarantee: bound boxes has more than one elements
         """
         img_id = self.img_keys[index]
@@ -64,6 +72,12 @@ class DetectionDataset(Dataset):
 
         img = pil_loader(os.path.join(self.img_sub_folder, image_name))
         img_w, img_h = img.size
+
+        target: Dict[str, Any] = {
+            "image_id": img_id,
+            "orig_size": (img_h, img_w)
+        }
+        target.update(self.other_info(img_id))
 
         bbox_sizes = []
         bbox_labels = []
@@ -79,17 +93,15 @@ class DetectionDataset(Dataset):
         bbox_sizes = torch.tensor(bbox_sizes, dtype=torch.float)
         bbox_labels = torch.tensor(bbox_labels, dtype=torch.long)
 
-        if self.augmentations is not None:
-            img, bbox_sizes, bbox_labels = self.augmentations(img, bbox_sizes, bbox_labels)
+        target["boxes"] = bbox_sizes
+        target["labels"] = bbox_labels
 
-        img = TF.resize(img, self.resize)
+        if self.augmentations is not None:
+            img, target = self.augmentations(img, target)
+
+        if self.resize is not None:
+            img = TF.resize(img, self.resize)
         img = TF.to_tensor(img)
         img = TF.normalize(img, self.dataset_mean, self.dataset_std, inplace=True)
-
-        info = dict(
-            img_id=img_id,
-            size=(img_h, img_w)
-        )
-        info.update(self.other_info(img_id))
-        return img, bbox_sizes, bbox_labels, info
+        return img, target
 

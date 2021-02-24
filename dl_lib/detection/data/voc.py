@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Optional, Dict, Any
 import logging
 import xml.etree.ElementTree as ET
 
@@ -8,7 +8,7 @@ from PIL.Image import Image
 import numpy as np
 
 from torch import FloatTensor, LongTensor
-from torch.utils.data.dataset import Dataset
+from torch.utils.data.dataset import ConcatDataset
 from torchvision.datasets.utils import verify_str_arg
 
 from .detection_dataset import DetectionDataset
@@ -16,8 +16,6 @@ from .detection_dataset import DetectionDataset
 
 VOC_MEAN = [0.485, 0.456, 0.406]
 VOC_STD = [0.229, 0.224, 0.225]
-# VOC_MEAN = [104, 117, 123]
-# VOC_STD = [1, 1, 1]
 
 
 class VOCPartialDataset(DetectionDataset):
@@ -37,8 +35,8 @@ class VOCPartialDataset(DetectionDataset):
             root: str,
             split: str = "trainval",
             version: str = "2007",
-            resize: Tuple[int] = (300, 300),
-            augmentations: Callable[[Image, FloatTensor, LongTensor], Tuple[Image, FloatTensor, LongTensor]] = None,
+            resize: Optional[Tuple[int]] = (300, 300),
+            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
     ):
         super().__init__(resize, augmentations)
         self.keep_difficult = not("train" in split)
@@ -57,7 +55,7 @@ class VOCPartialDataset(DetectionDataset):
         # read split file
         split_fp = os.path.join(self.root, "ImageSets", "Main", "{}.txt".format(split))
         if not os.path.isfile(split_fp):
-            raise Exception("Split file {} is not found, note that there is no test.txt for VOC2012")
+            raise Exception("Split file {} is not found, note that there is no test.txt for VOC dataset")
         with open(split_fp, "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
@@ -132,55 +130,35 @@ class VOCPartialDataset(DetectionDataset):
     def other_info(self, img_id: int):
         return dict(difficult=self.difficult[img_id])
 
-    # def __getitem__(self, index: int):
-    #     """
-    #     Return image, image_id, img_size (hxw), list of bounding boxes and list of bounding box labels
-    #     Guarantee: bound boxes has more than one elements
-    #     """
-    #     import cv2
-    #     import torch
 
-    #     img_id = self.img_keys[index]
-    #     image_name, bboxes = self.images[img_id]
-
-    #     img = cv2.imread(os.path.join(self.img_sub_folder, image_name))
-    #     img_h = img.shape[0]
-    #     img_w = img.shape[1]
-
-    #     bbox_sizes = []
-    #     bbox_labels = []
-
-    #     for (x, y, w, h), bbox_label in bboxes:
-    #         right = x + w
-    #         bottom = y + h
-    #         # normalize
-    #         bbox_size = (x / img_w, y / img_h, right / img_w, bottom / img_h)
-    #         bbox_sizes.append(bbox_size)
-    #         bbox_labels.append(bbox_label)
-
-    #     bbox_sizes = torch.tensor(bbox_sizes, dtype=torch.float)
-    #     bbox_labels = torch.tensor(bbox_labels, dtype=torch.long)
-
-    #     if self.augmentations is not None:
-    #         img, bbox_sizes, bbox_labels = self.augmentations(img, bbox_sizes, bbox_labels)
-
-    #     img = cv2.resize(img, tuple(self.resize)).astype(np.float32)
-    #     img -= VOC_MEAN
-    #     img = img[..., (2, 1, 0)]
-    #     img = torch.tensor(img).permute(2, 0, 1)
-
-    #     info = dict(
-    #         img_id=img_id,
-    #         size=(img_h, img_w)
-    #     )
-    #     info.update(self.other_info(img_id))
-    #     return img, bbox_sizes, bbox_labels, info
+class VOC2007Dataset(VOCPartialDataset):
+    def __init__(
+            self,
+            root: str,
+            split: str = "trainval",
+            resize: Optional[Tuple[int]] = (300, 300),
+            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+    ):
+        super().__init__(root, split, version="2007", resize=resize, augmentations=augmentations)
 
 
-class VOC2012Dataset(Dataset):
+class VOC0712Dataset(VOCPartialDataset):
     """
     Combined VOC2007 and VOC2012 partial
     """
-    def __init__(self):
-        pass
+    def __init__(
+            self,
+            root: str,
+            split: str = "trainval",
+            split_07: Optional[str] = "trainval",
+            split_12: Optional[str] = "trainval",
+            resize: Optional[Tuple[int]] = (300, 300),
+            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+    ):
+        if split == "test":
+            super().__init__(resize, )
+        else:
+            subset_07 = VOC2007Dataset(root, split_07, resize, augmentations)
+            subset_12 = VOCPartialDataset(root, split_12, "2012", resize, augmentations)
+            self.datasets.extend([subset_07, subset_12])
 
