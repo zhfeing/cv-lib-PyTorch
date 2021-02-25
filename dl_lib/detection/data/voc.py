@@ -45,6 +45,7 @@ class VOCPartialDataset(DetectionDataset):
         verify_str_arg(split, "split", ("train", "val", "test", "trainval"))
 
         self.logger = logging.getLogger("VOCDetection")
+        self.version = version
         # parse folders
         sub_dir = "VOC{}".format(version)
         self.root = os.path.expanduser(os.path.join(root, sub_dir))
@@ -55,7 +56,7 @@ class VOCPartialDataset(DetectionDataset):
         # read split file
         split_fp = os.path.join(self.root, "ImageSets", "Main", "{}.txt".format(split))
         if not os.path.isfile(split_fp):
-            raise Exception("Split file {} is not found, note that there is no test.txt for VOC dataset")
+            raise Exception("Split file {} is not found, note that there is no test.txt for VOC dataset".format(split_fp))
         with open(split_fp, "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
@@ -155,10 +156,38 @@ class VOC0712Dataset(VOCPartialDataset):
             resize: Optional[Tuple[int]] = (300, 300),
             augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
     ):
+        self.sub_datasets: List[VOCPartialDataset] = list()
         if split == "test":
-            super().__init__(resize, )
+            self.sub_datasets += [VOC2007Dataset(root, split, resize, augmentations)]
         else:
-            subset_07 = VOC2007Dataset(root, split_07, resize, augmentations)
-            subset_12 = VOCPartialDataset(root, split_12, "2012", resize, augmentations)
-            self.datasets.extend([subset_07, subset_12])
+            self.sub_datasets += [
+                VOC2007Dataset(root, split_07, resize, augmentations),
+                VOCPartialDataset(root, split_12, "2012", resize, augmentations)
+            ]
+
+        # adaption with `VOCPartialDataset`
+        self.resize = tuple(resize) if isinstance(resize, list) else resize
+        self.augmentations = augmentations
+
+        self.root = os.path.expanduser(root)
+
+        self.img_sub_folder = self.root
+        self.dataset_mean = self.sub_datasets[0].dataset_mean
+        self.dataset_std = self.sub_datasets[0].dataset_std
+        self.label_map = self.sub_datasets[0].label_map
+        self.label_info = self.sub_datasets[0].label_info
+
+        self.images = dict()
+        self.img_keys = list()
+        self.difficult = dict()
+        # combination
+        for d in self.sub_datasets:
+            dataset_sub_path = os.path.join("VOC{}".format(d.version), "JPEGImages")
+            for k in d.images.keys():
+                record = list(d.images[k])
+                record[0] = os.path.join(dataset_sub_path, record[0])
+                d.images[k] = tuple(record)
+            self.images.update(d.images)
+            self.img_keys.extend(d.img_keys)
+            self.difficult.update(d.difficult)
 
