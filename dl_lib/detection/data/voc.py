@@ -7,8 +7,7 @@ import tqdm
 from PIL.Image import Image
 import numpy as np
 
-from torch import FloatTensor, LongTensor
-from torch.utils.data.dataset import ConcatDataset
+import torch
 from torchvision.datasets.utils import verify_str_arg
 
 from .detection_dataset import DetectionDataset
@@ -113,7 +112,7 @@ class VOCPartialDataset(DetectionDataset):
                 is_difficult = is_difficult[~is_difficult]
             boxes = boxes.tolist()
             labels = labels.tolist()
-            is_difficult = is_difficult.tolist()
+            is_difficult = torch.tensor(is_difficult, dtype=torch.bool)
             boxes = list((a, b) for a, b in zip(boxes, labels))
             self.images[img_id][1].extend(boxes)
             self.difficult[img_id] = is_difficult

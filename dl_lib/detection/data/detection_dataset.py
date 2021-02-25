@@ -8,6 +8,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import pil_loader
 import torchvision.transforms.functional as TF
+from torchvision.ops.boxes import box_area
 
 
 class DetectionDataset(Dataset):
@@ -61,7 +62,8 @@ class DetectionDataset(Dataset):
                 image_id: str or int,
                 orig_size: original image size (h, w)
                 size: image size after transformation (h, w)
-                boxes: bounding box for each object in the image (x1, y1, x2, y2)
+                boxes: relative bounding box for each object in the image (x1, y1, x2, y2) [0, 1]
+                area: bounding box relative area [0, 1]
                 labels: label for each bounding box
                 (expand to dict) OTHER_INFO: other information from inhered class `other_info(img_id)`
             }
@@ -75,7 +77,8 @@ class DetectionDataset(Dataset):
 
         target: Dict[str, Any] = {
             "image_id": img_id,
-            "orig_size": (img_h, img_w)
+            "orig_size": (img_h, img_w),
+            "size": (img_h, img_w)
         }
         target.update(self.other_info(img_id))
 
@@ -101,6 +104,7 @@ class DetectionDataset(Dataset):
 
         if self.resize is not None:
             img = TF.resize(img, self.resize)
+        target["area"] = box_area(target["boxes"])
         img = TF.to_tensor(img)
         img = TF.normalize(img, self.dataset_mean, self.dataset_std, inplace=True)
         return img, target
