@@ -1,7 +1,7 @@
 import logging
 import logging.handlers
 import traceback
-from typing import Callable
+from typing import Callable, Tuple
 import multiprocessing as mp
 
 
@@ -17,7 +17,7 @@ class MultiProcessLoggerListener:
         logger.setLevel(logging.DEBUG)
     ```
     """
-    def __init__(self, logger_constructor: Callable[[], logging.Logger], mp_context="spawn"):
+    def __init__(self, logger_constructor: Callable[[], Tuple[logging.Logger, str]], mp_context="spawn"):
         """
         Args:
             logger_constructor: function to create root logger
@@ -29,7 +29,7 @@ class MultiProcessLoggerListener:
         self.listener.start()
 
     def listen(self):
-        root = self._logger_constructor()
+        root, _ = self._logger_constructor()
         root.info("Starting...")
         while True:
             try:
