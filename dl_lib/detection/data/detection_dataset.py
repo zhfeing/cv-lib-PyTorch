@@ -104,6 +104,7 @@ class DetectionDataset(Dataset):
 
         if self.resize is not None:
             img = TF.resize(img, self.resize)
+            target["size"] = self.resize
         target["area"] = box_area(target["boxes"])
         img = TF.to_tensor(img)
         img = TF.normalize(img, self.dataset_mean, self.dataset_std, inplace=True)
