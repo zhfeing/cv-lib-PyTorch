@@ -1,13 +1,6 @@
-import os
-from typing import Callable, Dict, Tuple, List, Any
-from collections import defaultdict
-
 import numpy as np
 
-import torch
-import torchvision.transforms.functional as TF
-
-from data.detection_dataset import DetectionDataset
+from .detection_dataset import DetectionDataset
 
 
 class FewExampleDataset(DetectionDataset):

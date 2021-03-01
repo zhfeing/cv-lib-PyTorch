@@ -6,8 +6,12 @@ from .aug import *
 
 __REGISTERED_AUGS__ = {
     "RandomCrop": RandomCrop,
+    "RandomSizeCrop": RandomSizeCrop,
+    "CenterCrop": CenterCrop,
     "RandomHorizontalFlip": RandomHorizontalFlip,
-    "ColorJitter": ColorJitter
+    "ColorJitter": ColorJitter,
+    "RandomPadBottomRight": RandomPadBottomRight,
+    "RandomResize": RandomResize,
 }
 
 

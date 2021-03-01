@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 import yaml
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -21,44 +21,47 @@ def set_debug(global_cfg: Dict[str, Any], debug: bool = False):
         global_cfg["validation"]["n_workers"] = 0
 
 
-def get_tb_writer(logdir, filename) -> SummaryWriter:
+def get_tb_writer(logdir, filename) -> Tuple[SummaryWriter, str]:
+    logger_fp = os.path.join(
+        logdir,
+        "tf-board-logs",
+        filename
+    )
     writer = SummaryWriter(
-        log_dir=os.path.join(
-            logdir,
-            "tf-board-logs",
-            filename
-        ),
+        logger_fp,
         flush_secs=1,
         filename_suffix="_datetime-{}_".format(datetime.now())
     )
-    return writer
+    return writer, logger_fp
 
 
-def get_train_logger(logdir: str, filename: str) -> logging.Logger:
+def get_train_logger(logdir: str, filename: str) -> Tuple[logging.Logger, str]:
     train_log_dir = os.path.join(logdir, "train-logs")
     os.makedirs(train_log_dir, exist_ok=True)
+    logger_fp = os.path.join(
+        train_log_dir,
+        "training-" + filename + ".log"
+    )
     logger = get_logger(
         level=logging.INFO,
         mode="w",
         name=None,
-        logger_fp=os.path.join(
-            train_log_dir,
-            "training-" + filename + ".log"
-        )
+        logger_fp=logger_fp
     )
     logger.propagate = False
-    return logger
+    return logger, logger_fp
 
 
-def get_eval_logger(logdir: str) -> logging.Logger:
+def get_eval_logger(logdir: str) -> Tuple[logging.Logger, str]:
     os.makedirs(logdir, exist_ok=True)
+    logger_fp = os.path.join(
+        logdir,
+        "eval.log"
+    )
     logger = get_logger(
         level=logging.INFO,
         mode="w",
         name=None,
-        logger_fp=os.path.join(
-            logdir,
-            "eval.log"
-        )
+        logger_fp=logger_fp
     )
-    return logger
+    return logger, logger_fp
