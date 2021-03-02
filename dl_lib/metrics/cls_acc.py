@@ -1,10 +1,16 @@
+from typing import List
+
 import torch
 from torch import Tensor
 
 
-def accuracy(output: Tensor, target: Tensor, topk=(1,)):
+def accuracy(output: Tensor, target: Tensor, topk=(1,)) -> List[float]:
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
+        if target.numel() == 0:
+            res = torch.zeros(len(topk)).tolist()
+            return res
+
         maxk = max(topk)
         batch_size = target.size(0)
 
@@ -15,5 +21,5 @@ def accuracy(output: Tensor, target: Tensor, topk=(1,)):
         res = []
         for k in topk:
             correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(1.0 / batch_size))
+            res.append(correct_k.mul_(1.0 / batch_size).item())
         return res

@@ -27,7 +27,6 @@ __all__ = [
     "float_to_uint_image",
     "save_object",
     "load_object",
-    "make_iter_dataloader"
 ]
 
 
@@ -104,14 +103,3 @@ def save_object(obj: Any, fp: str):
 def load_object(fp: str) -> Any:
     with open(fp, "rb") as f:
         return pickle.load(f)
-
-
-def make_iter_dataloader(data_loader: DataLoader):
-    ep = 1
-    logger = logging.getLogger("make_iter_dataloader")
-    while True:
-        for data in data_loader:
-            yield data
-        logger.info("Epoch %d finished, start to iter next epoch", ep)
-        ep += 1
-
