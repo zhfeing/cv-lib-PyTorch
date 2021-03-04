@@ -83,7 +83,7 @@ class CocoDetection(DetectionDataset):
             self.annotations[img_id]["iscrowd"].append(bbox["iscrowd"])
 
         # transformation
-        for img_id in tqdm.tqdm(sorted(list(self.images.keys()))):
+        for img_id in tqdm.tqdm(list(self.images.keys())):
             # transform to tensor
             boxes = torch.tensor(self.annotations[img_id]["boxes"], dtype=torch.float).reshape(-1, 4)
             labels = torch.tensor(self.annotations[img_id]["labels"], dtype=torch.long)
