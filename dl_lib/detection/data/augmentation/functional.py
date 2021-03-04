@@ -47,11 +47,13 @@ def crop(
         boxes = target["boxes"]
         boxes[:, [0, 2]] *= src_w
         boxes[:, [1, 3]] *= src_h
+        boxes = box_op.box_convert(boxes, "cxcywh", "xyxy")
         boxes -= torch.tensor([left, top, left, top])
         boxes = box_op.clip_boxes_to_image(boxes, (h, w))
         keep = box_op.remove_small_boxes(boxes, 1)
         boxes[:, [0, 2]] /= w
         boxes[:, [1, 3]] /= h
+        boxes = box_op.box_convert(boxes, "xyxy", "cxcywh")
         target["boxes"] = boxes
         for field in fields:
             target[field] = target[field][keep]
@@ -126,9 +128,11 @@ def pad_bottom_right(
     target["size"] = (img.size[1], img.size[0])
 
     if "boxes" in target:
+        bboxes = box_op.box_convert(target["boxes"], "cxcywh", "xyxy")
         x_ratio = w / (w + padding[0])
         y_ratio = h / (h + padding[1])
-        target["boxes"] *= torch.tensor([x_ratio, y_ratio, x_ratio, y_ratio])
+        bboxes *= torch.tensor([x_ratio, y_ratio, x_ratio, y_ratio])
+        target["boxes"] = box_op.box_convert(bboxes, "xyxy", "cxcywh")
     if "masks" in target:
         target['masks'] = TF.pad(target['masks'], (0, 0, padding[0], padding[1]))
 

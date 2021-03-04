@@ -1,13 +1,12 @@
-import os
 from typing import Callable, Dict, Tuple, List, Any, Optional, Union
 
 from PIL.Image import Image
 
-import torch
 from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import pil_loader
 import torchvision.transforms.functional as TF
+import torchvision.ops.boxes as box_ops
 
 
 _ImageId = Union[str, int]
@@ -63,7 +62,8 @@ class DetectionDataset(Dataset):
                 image_id: str or int,
                 orig_size: original image size (h, w)
                 size: image size after transformation (h, w)
-                boxes: relative bounding box for each object in the image (x1, y1, x2, y2) [0, 1]
+                boxes: relative bounding box for each object in the image (cx, cy, w, h)
+                    normalized to [0, 1]
                 labels: label for each bounding box
                 *OTHER_INFO*: other information
             }
@@ -87,7 +87,7 @@ class DetectionDataset(Dataset):
         bboxes: Tensor = target["boxes"]
         assert bboxes.shape[1] == 4 and bboxes.ndim == 2, "bound box must have shape: [n, 4]"
         # convert (xyxy)
-        bboxes[:, 2:] += bboxes[:, :2]
+        bboxes = box_ops.box_convert(bboxes, "xywh", "cxcywh")
         # normalize
         bboxes[:, (0, 2)] /= img_w
         bboxes[:, (1, 3)] /= img_h

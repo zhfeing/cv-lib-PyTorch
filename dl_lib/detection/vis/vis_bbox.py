@@ -7,6 +7,7 @@ from PIL import Image
 import torch
 from torch import Tensor, LongTensor
 import torchvision.transforms.functional as TF
+import torchvision.ops.boxes as box_ops
 
 from ..data.augmentation import UnNormalize
 
@@ -50,7 +51,7 @@ def draw_img_preds(
 ) -> np.ndarray:
     """
     Args:
-        img: 
+        img:
         bboxes: xyxy order, normalized
         img_size: (h, w)
     """
@@ -76,6 +77,7 @@ def vis_bbox(
     img_size: Tuple[int],
     dataset_mean: Tuple[int],
     dataset_std: Tuple[int],
+    bbox_fmt: str = "cxcywh",
     save_fp: Optional[str] = None
 ) -> np.ndarray:
     """
@@ -83,6 +85,7 @@ def vis_bbox(
     """
     un_normalize = UnNormalize(dataset_mean, dataset_std)
     img = un_normalize(img) * 255
+    bboxes = box_ops.box_convert(bboxes, bbox_fmt, "xyxy")
     img = draw_img_preds(img, bboxes, bbox_labels, img_size)
     if save_fp is not None:
         cv2.imwrite(save_fp, img)
