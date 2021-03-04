@@ -1,12 +1,17 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
+import copy
 
-from torch.optim import SGD, Adam, ASGD, Adamax, Adadelta, Adagrad, RMSprop
+from torch import nn
+from torch.optim import *
+
+from ..utils import to_json_str
 
 
-__REGISTERED_OPTIMIZERS__ = {
+__REGISTERED_OPTIMIZERS__: Dict[str, Optimizer] = {
     "SGD": SGD,
     "Adam": Adam,
+    "AdamW": AdamW,
     "ASGD": ASGD,
     "Adamax": Adamax,
     "Adadelta": Adadelta,
@@ -15,7 +20,7 @@ __REGISTERED_OPTIMIZERS__ = {
 }
 
 
-def get_optimizer(optimizer_cfg: Dict[str, Dict[str, Any]]):
+def get_optimizer(params: List[Dict[str, nn.Parameter]], optimizer_cfg: Dict[str, Dict[str, Any]]) -> Optimizer:
     """
     optimizer yml example
     ```
@@ -29,8 +34,9 @@ def get_optimizer(optimizer_cfg: Dict[str, Dict[str, Any]]):
     logger = logging.getLogger("get_optimizer")
 
     opt_name = optimizer_cfg["name"]
-    if opt_name not in __REGISTERED_OPTIMIZERS__:
-        raise NotImplementedError("Optimizer {} not implemented".format(opt_name))
+    optim_cfg = copy.deepcopy(optimizer_cfg)
+    optim_cfg.pop("name")
 
-    logger.info("Using {} optimizer".format(opt_name))
-    return __REGISTERED_OPTIMIZERS__[opt_name]
+    logger.info("Using {} optimizer with config {}".format(opt_name, to_json_str(optim_cfg)))
+    optimizer = __REGISTERED_OPTIMIZERS__[opt_name](params, **optim_cfg)
+    return optimizer

@@ -1,14 +1,15 @@
-import os
-from typing import Callable, Dict, Tuple, List, Any, Optional
+from typing import Callable, Dict, Tuple, List, Any, Optional, Union
 
 from PIL.Image import Image
 
-import torch
 from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.datasets.folder import pil_loader
 import torchvision.transforms.functional as TF
-from torchvision.ops.boxes import box_area
+import torchvision.ops.boxes as box_ops
+
+
+_ImageId = Union[str, int]
 
 
 class DetectionDataset(Dataset):
@@ -16,13 +17,13 @@ class DetectionDataset(Dataset):
     Base Detection Dataset
 
     Inhered Class Requirements:
-        `img_sub_folder`: root folder to all images
-        `images`: dict e.g. {img_id: [image_name, bboxes]},
-            where bboxes: ((left, top, width, height), bbox_label), you should guardentee that
-            at least one bbox for a image and "img_sub_folder/image_name" is the image filepath
+        `img_ids`: list of img_id, the `img_id` is the unique id for each image (could be str or int)
+        `images`: dict e.g. {img_id: img_filepath}
+        `annotations`: dict must contains:
+            boxes: bounding boxes with order (x_1, y_1, w, h)
+            labels: label for each bounding box
         `label_map`: Dict[str, int], map a str label to its id != 0 (for train)
         `label_info`: Dict[int, str], map a label id to its str, 0 for background
-        `img_keys`: list of img_id, the `img_id` is the unique id for each image (could be str or int)
         `dataset_mean`: List[float]
         `dataset_std`: List[float]
     """
@@ -37,11 +38,13 @@ class DetectionDataset(Dataset):
         self.resize = tuple(resize) if isinstance(resize, list) else resize
         self.augmentations = augmentations
 
-        self.img_sub_folder: str = None
-        self.images = dict()
+        self.img_ids: List[_ImageId] = list()
+        # map all img key to its dir
+        self.images: Dict[_ImageId, str] = dict()
+        # map all img key to its annotations
+        self.annotations: Dict[_ImageId, Dict[str, Any]] = dict()
         self.label_map: Dict[str, int] = dict()
         self.label_info: Dict[int, str] = dict()
-        self.img_keys = list()
         self.dataset_mean: List[float] = None
         self.dataset_std: List[float] = None
 
@@ -50,10 +53,7 @@ class DetectionDataset(Dataset):
         return len(self.label_info)
 
     def __len__(self) -> int:
-        return len(self.img_keys)
-
-    def other_info(self, img_id: int) -> Dict[str, Any]:
-        return dict()
+        return len(self.img_ids)
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Dict[str, Any]]:
         """
@@ -62,41 +62,39 @@ class DetectionDataset(Dataset):
                 image_id: str or int,
                 orig_size: original image size (h, w)
                 size: image size after transformation (h, w)
-                boxes: relative bounding box for each object in the image (x1, y1, x2, y2) [0, 1]
-                area: bounding box relative area [0, 1]
+                boxes: relative bounding box for each object in the image (cx, cy, w, h)
+                    normalized to [0, 1]
                 labels: label for each bounding box
-                (expand to dict) OTHER_INFO: other information from inhered class `other_info(img_id)`
+                *OTHER_INFO*: other information
             }
-        Guarantee: bound boxes has more than one elements
-        """
-        img_id = self.img_keys[index]
-        image_name, bboxes = self.images[img_id]
 
-        img = pil_loader(os.path.join(self.img_sub_folder, image_name))
+        Warning: after transformation, the number of bounding box of one image could be ZERO
+        """
+        img_id = self.img_ids[index]
+        img = pil_loader(self.images[img_id])
         img_w, img_h = img.size
+
+        annotation = self.annotations[img_id]
 
         target: Dict[str, Any] = {
             "image_id": img_id,
             "orig_size": (img_h, img_w),
             "size": (img_h, img_w)
         }
-        target.update(self.other_info(img_id))
+        target.update(annotation)
 
-        bbox_sizes = []
-        bbox_labels = []
+        bbox_labels = target["labels"]
+        bboxes: Tensor = target["boxes"]
+        assert bboxes.shape[1] == 4 and bboxes.ndim == 2, "bound box must have shape: [n, 4]"
+        # convert (xyxy)
+        bboxes = box_ops.box_convert(bboxes, "xywh", "cxcywh")
+        # normalize
+        bboxes[:, (0, 2)] /= img_w
+        bboxes[:, (1, 3)] /= img_h
+        # bbox must not larger than image
+        bboxes.clamp_(0, 1)
 
-        for (x, y, w, h), bbox_label in bboxes:
-            right = x + w
-            bottom = y + h
-            # normalize
-            bbox_size = (x / img_w, y / img_h, right / img_w, bottom / img_h)
-            bbox_sizes.append(bbox_size)
-            bbox_labels.append(bbox_label)
-
-        bbox_sizes = torch.tensor(bbox_sizes, dtype=torch.float)
-        bbox_labels = torch.tensor(bbox_labels, dtype=torch.long)
-
-        target["boxes"] = bbox_sizes
+        target["boxes"] = bboxes
         target["labels"] = bbox_labels
 
         if self.augmentations is not None:
@@ -105,7 +103,6 @@ class DetectionDataset(Dataset):
         if self.resize is not None:
             img = TF.resize(img, self.resize)
             target["size"] = self.resize
-        target["area"] = box_area(target["boxes"])
         img = TF.to_tensor(img)
         img = TF.normalize(img, self.dataset_mean, self.dataset_std, inplace=True)
         return img, target

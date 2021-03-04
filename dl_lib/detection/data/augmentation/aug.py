@@ -1,3 +1,7 @@
+"""
+All bounding boxes are supposed as "cxcywh" format and normalized to [0, 1]
+"""
+
 import random
 from typing import Tuple, Dict, Any, List
 import abc
@@ -76,7 +80,7 @@ class RandomHorizontalFlip(BaseTransform):
             img = TF.hflip(img)
             if "boxes" in target:
                 boxes = target["boxes"]
-                target["boxes"][:, 0], target["boxes"][:, 2] = 1 - boxes[:, 2], 1 - boxes[:, 0]
+                target["boxes"][:, 0] = 1 - boxes[:, 0]
             if "masks" in target:
                 target["masks"] = TF.hflip(target["masks"])
         return img, target
