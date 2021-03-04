@@ -1,7 +1,8 @@
 import pickle
-from typing import Any
+from typing import Any, Dict
 
 import torch
+from torch import Tensor
 import torch.distributed as dist
 
 
@@ -11,6 +12,7 @@ __all__ = [
     "get_rank",
     "is_main_process",
     "all_gather",
+    "reduce_tensor",
     "reduce_dict",
     "cal_split_args"
 ]
@@ -83,7 +85,18 @@ def all_gather(data: Any):
     return data_list
 
 
-def reduce_dict(input_dict: dict, average=True):
+def reduce_tensor(tensor: torch.Tensor, average=True) -> Tensor:
+    world_size = get_world_size()
+    if world_size < 2:
+        return tensor
+    with torch.no_grad():
+        dist.all_reduce(tensor)
+        if average:
+            tensor /= world_size
+        return tensor
+
+
+def reduce_dict(input_dict: Dict[str, Tensor], average=True) -> Dict[str, Tensor]:
     """
     Reduce the values in the dictionary from all processes so that all processes
     have the averaged results. Returns a dict with the same fields as
