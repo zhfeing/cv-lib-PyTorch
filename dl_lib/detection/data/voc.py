@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 
 import tqdm
 from PIL.Image import Image
-import numpy as np
 
 import torch
 from torchvision.datasets.utils import verify_str_arg
@@ -36,9 +35,10 @@ class VOCPartialDataset(DetectionDataset):
             version: str = "2007",
             resize: Optional[Tuple[int]] = (300, 300),
             augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+            keep_difficult: bool = False
     ):
         super().__init__(resize, augmentations)
-        self.keep_difficult = not("train" in split)
+        self.keep_difficult = keep_difficult
 
         verify_str_arg(version, "version", ("2007", "2012"))
         verify_str_arg(split, "split", ("train", "val", "test", "trainval"))
@@ -59,9 +59,6 @@ class VOCPartialDataset(DetectionDataset):
         with open(split_fp, "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
-        self.img_sub_folder = os.path.join(self.root, "JPEGImages")
-
-        self.difficult = dict()
         self.logger.info("Parsing VOC%s %s dataset...", version, split)
         self._init_dataset(file_names, annotation_folder)
         self.logger.info("Parsing VOC%s %s dataset done", version, split)
@@ -84,7 +81,10 @@ class VOCPartialDataset(DetectionDataset):
             labels.append(self.label_map[class_name])
             is_difficult.append(int(obj.find('difficult').text))
 
-        return np.array(boxes), np.array(labels), np.array(is_difficult, dtype=np.bool)
+        boxes = torch.tensor(boxes, dtype=torch.float)
+        labels = torch.tensor(labels, dtype=torch.long)
+        is_difficult = torch.tensor(is_difficult, dtype=torch.bool)
+        return boxes, labels, is_difficult
 
     def _init_dataset(self, file_names: List[str], annotation_folder):
         # 0 stand for the background
@@ -99,7 +99,7 @@ class VOCPartialDataset(DetectionDataset):
         for img_id in file_names:
             if img_id in self.images:
                 raise Exception("duplicated image record")
-            self.images[img_id] = (img_id + ".jpg", [])
+            self.images[img_id] = os.path.join(self.image_folder, f"{img_id}.jpg")
 
         # read bboxes
         self.logger.info("Reading annotations...")
@@ -110,25 +110,23 @@ class VOCPartialDataset(DetectionDataset):
                 boxes = boxes[~is_difficult]
                 labels = labels[~is_difficult]
                 is_difficult = is_difficult[~is_difficult]
-            boxes = boxes.tolist()
-            labels = labels.tolist()
-            is_difficult = torch.tensor(is_difficult, dtype=torch.bool)
-            boxes = list((a, b) for a, b in zip(boxes, labels))
-            self.images[img_id][1].extend(boxes)
-            self.difficult[img_id] = is_difficult
+            target = {
+                "boxes": boxes,
+                "labels": labels,
+                "is_difficult": is_difficult
+            }
+            self.annotations[img_id] = target
         self.logger.info("Reading annotations done")
 
-        for k, v in list(self.images.items()):
+        for k, v in list(self.annotations.items()):
             # remove image with no annotations
-            if len(v[1]) == 0:
+            if len(v["boxes"]) == 0:
                 self.images.pop(k)
+                self.annotations.pop(k)
 
-        self.img_keys = list(self.images.keys())
+        self.img_ids = sorted(list(self.images.keys()))
         self.dataset_mean = VOC_MEAN
         self.dataset_std = VOC_STD
-
-    def other_info(self, img_id: int):
-        return dict(difficult=self.difficult[img_id])
 
 
 class VOC2007Dataset(VOCPartialDataset):
@@ -170,23 +168,17 @@ class VOC0712Dataset(VOCPartialDataset):
 
         self.root = os.path.expanduser(root)
 
-        self.img_sub_folder = self.root
         self.dataset_mean = self.sub_datasets[0].dataset_mean
         self.dataset_std = self.sub_datasets[0].dataset_std
         self.label_map = self.sub_datasets[0].label_map
         self.label_info = self.sub_datasets[0].label_info
 
         self.images = dict()
-        self.img_keys = list()
-        self.difficult = dict()
+        self.img_ids = list()
+        self.annotations = dict()
         # combination
         for d in self.sub_datasets:
-            dataset_sub_path = os.path.join("VOC{}".format(d.version), "JPEGImages")
-            for k in d.images.keys():
-                record = list(d.images[k])
-                record[0] = os.path.join(dataset_sub_path, record[0])
-                d.images[k] = tuple(record)
             self.images.update(d.images)
-            self.img_keys.extend(d.img_keys)
-            self.difficult.update(d.difficult)
+            self.img_ids.extend(d.img_ids)
+            self.annotations.update(d.annotations)
 
