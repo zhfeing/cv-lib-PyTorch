@@ -1,4 +1,6 @@
 import abc
+from collections import defaultdict
+from typing import DefaultDict, Dict, Union
 
 from torch import Tensor
 
@@ -6,6 +8,7 @@ from torch import Tensor
 __all__ = [
     "Meter",
     "AverageMeter",
+    "DictAverageMeter"
 ]
 
 
@@ -34,8 +37,9 @@ class Meter(abc.ABC):
 
 
 class AverageMeter(Meter):
-    """Computes and stores the average and current value"""
-
+    """
+    Computes and stores the average and current value
+    """
     def __init__(self):
         self.reset()
 
@@ -55,3 +59,25 @@ class AverageMeter(Meter):
 
     def value(self):
         return self.avg
+
+
+class DictAverageMeter(Meter):
+    """
+    Computes and stores the average and current value (Dict[str, Union[float, Tensor]])
+    """
+    def __init__(self):
+        self.average_meters = defaultdict(AverageMeter)
+        self.reset()
+
+    def reset(self):
+        self.average_meters.clear()
+
+    def update(self, val: Dict[str, Union[float, Tensor]], n=1):
+        for k, v in val.items():
+            self.average_meters[k].update(v, n)
+
+    def value(self):
+        avg_dict = dict()
+        for k, meter in self.average_meters.items():
+            avg_dict[k] = meter.value()
+        return avg_dict
