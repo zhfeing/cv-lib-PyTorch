@@ -1,6 +1,8 @@
 from typing import List
 from collections import defaultdict
 
+import tqdm
+
 import torch
 from torch import Tensor
 from torchvision.ops.boxes import box_iou
@@ -10,8 +12,9 @@ import numpy as np
 from .meter import Meter
 
 
-class PrecisionRecallMeter(Meter):
-    """Calculate precision and recall based on evaluation code of PASCAL VOC.
+class VOCPrecisionRecallMeter(Meter):
+    """
+    Calculate precision and recall based on evaluation code of PASCAL VOC.
 
     This function calculates precision and recall of predicted bounding
     boxes obtained from a dataset which has :math:`N` images.
@@ -97,7 +100,7 @@ class PrecisionRecallMeter(Meter):
             self.gt_difficult
         )
         # for each image
-        for pred_bbox, pred_label, pred_score, gt_bbox, gt_label, gt_difficult in batch_iter:
+        for pred_bbox, pred_label, pred_score, gt_bbox, gt_label, gt_difficult in tqdm.tqdm(batch_iter, total=len(self.pred_bboxes)):
             # convert difficult
             if gt_difficult is None:
                 gt_difficult = torch.zeros(gt_bbox.shape[0], device=gt_bbox.device, dtype=torch.bool)

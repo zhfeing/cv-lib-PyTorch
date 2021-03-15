@@ -153,11 +153,11 @@ class VOC0712Dataset(VOCPartialDataset):
             resize: Optional[Tuple[int]] = (300, 300),
             augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
     ):
-        self.sub_datasets: List[VOCPartialDataset] = list()
+        sub_datasets: List[VOCPartialDataset] = list()
         if split == "test":
-            self.sub_datasets += [VOC2007Dataset(root, split, resize, augmentations)]
+            sub_datasets += [VOC2007Dataset(root, split, resize, augmentations)]
         else:
-            self.sub_datasets += [
+            sub_datasets += [
                 VOC2007Dataset(root, split_07, resize, augmentations),
                 VOCPartialDataset(root, split_12, "2012", resize, augmentations)
             ]
@@ -168,16 +168,16 @@ class VOC0712Dataset(VOCPartialDataset):
 
         self.root = os.path.expanduser(root)
 
-        self.dataset_mean = self.sub_datasets[0].dataset_mean
-        self.dataset_std = self.sub_datasets[0].dataset_std
-        self.label_map = self.sub_datasets[0].label_map
-        self.label_info = self.sub_datasets[0].label_info
+        self.dataset_mean = sub_datasets[0].dataset_mean
+        self.dataset_std = sub_datasets[0].dataset_std
+        self.label_map = sub_datasets[0].label_map
+        self.label_info = sub_datasets[0].label_info
 
         self.images = dict()
         self.img_ids = list()
         self.annotations = dict()
         # combination
-        for d in self.sub_datasets:
+        for d in sub_datasets:
             self.images.update(d.images)
             self.img_ids.extend(d.img_ids)
             self.annotations.update(d.annotations)
