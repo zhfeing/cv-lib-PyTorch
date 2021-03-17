@@ -57,15 +57,21 @@ class VOCPrecisionRecallMeter(Meter):
     def __init__(self, iou_threshold: float = 0.5, use_07_metric: bool = False):
         self.iou_threshold = iou_threshold
         self.use_07_metric = use_07_metric
-        self.reset()
 
-    def reset(self):
         self.pred_bboxes: List[Tensor] = list()
         self.pred_labels: List[Tensor] = list()
         self.pred_scores: List[Tensor] = list()
         self.gt_bboxes: List[Tensor] = list()
         self.gt_labels: List[Tensor] = list()
         self.gt_difficult: List[Tensor] = list()
+
+    def reset(self):
+        self.pred_bboxes.clear()
+        self.pred_labels.clear()
+        self.pred_scores.clear()
+        self.gt_bboxes.clear()
+        self.gt_labels.clear()
+        self.gt_difficult.clear()
 
     def update(
         self,
