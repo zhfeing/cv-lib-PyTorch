@@ -1,4 +1,5 @@
-from typing import Callable, Dict, Tuple, List, Any, Optional, Union
+from typing import Callable, Dict, Tuple, List, Any, Optional, Union, OrderedDict
+import collections
 
 from PIL.Image import Image
 
@@ -9,9 +10,6 @@ import torchvision.transforms.functional as TF
 import torchvision.ops.boxes as box_ops
 
 
-_ImageId = Union[str, int]
-
-
 class DetectionDataset(Dataset):
     """
     Base Detection Dataset
@@ -19,11 +17,8 @@ class DetectionDataset(Dataset):
     Inhered Class Requirements:
         `img_ids`: list of img_id, the `img_id` is the unique id for each image (could be str or int)
         `images`: dict e.g. {img_id: img_filepath}
-        `annotations`: dict must contains:
-            boxes: bounding boxes with order (x_1, y_1, w, h)
-            labels: label for each bounding box
-        `label_map`: Dict[str, int], map a str label to its id != 0 (for train)
-        `label_info`: Dict[int, str], map a label id to its str, 0 for background
+        `label_map`: OrderedDict[str, int], map a str label to its id != 0, no background
+        `label_info`: OrderedDict[int, str], map a label id to its str, 0 for background
         `dataset_mean`: List[float]
         `dataset_std`: List[float]
     """
@@ -38,13 +33,9 @@ class DetectionDataset(Dataset):
         self.resize = tuple(resize) if isinstance(resize, list) else resize
         self.augmentations = augmentations
 
-        self.img_ids: List[_ImageId] = list()
-        # map all img key to its dir
-        self.images: Dict[_ImageId, str] = dict()
-        # map all img key to its annotations
-        self.annotations: Dict[_ImageId, Dict[str, Any]] = dict()
-        self.label_map: Dict[str, int] = dict()
-        self.label_info: Dict[int, str] = dict()
+        self.images: List[str] = list()
+        self.label_map: OrderedDict[str, int] = collections.OrderedDict()
+        self.label_info: OrderedDict[int, str] = collections.OrderedDict({0: "background"})
         self.dataset_mean: List[float] = None
         self.dataset_std: List[float] = None
 
@@ -53,7 +44,13 @@ class DetectionDataset(Dataset):
         return len(self.label_info)
 
     def __len__(self) -> int:
-        return len(self.img_ids)
+        return len(self.images)
+
+    def get_annotation(self, index: int) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def get_img_id(self, index: int) -> Union[str, int]:
+        return index
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Dict[str, Any]]:
         """
@@ -70,14 +67,13 @@ class DetectionDataset(Dataset):
 
         Warning: after transformation, the number of bounding box of one image could be ZERO
         """
-        img_id = self.img_ids[index]
-        img = pil_loader(self.images[img_id])
+        img = pil_loader(self.images[index])
         img_w, img_h = img.size
 
-        annotation = self.annotations[img_id]
+        annotation = self.get_annotation(index)
 
         target: Dict[str, Any] = {
-            "image_id": img_id,
+            "image_id": self.get_img_id(index),
             "orig_size": (img_h, img_w),
             "size": (img_h, img_w)
         }

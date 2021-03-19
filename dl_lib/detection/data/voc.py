@@ -1,7 +1,9 @@
+import enum
 import os
 from typing import Callable, Tuple, List, Optional, Dict, Any
 import logging
 import xml.etree.ElementTree as ET
+import collections
 
 import tqdm
 from PIL.Image import Image
@@ -19,6 +21,7 @@ VOC_STD = [0.229, 0.224, 0.225]
 class VOCPartialDataset(DetectionDataset):
     """
     Pascal VOC <http://host.robots.ox.ac.uk/pascal/VOC/> Detection Dataset.
+    Only support 2007 and 2012 datasets
     """
     CLASSES = (
         "aeroplane", "bicycle", "bird", "boat",
@@ -46,24 +49,37 @@ class VOCPartialDataset(DetectionDataset):
         self.logger = logging.getLogger("VOCDetection")
         self.version = version
         # parse folders
-        sub_dir = "VOC{}".format(version)
-        self.root = os.path.expanduser(os.path.join(root, sub_dir))
-        # path to image folder, e.g. VOC2007/train2017
-        self.image_folder = os.path.join(self.root, "JPEGImages")
-        annotation_folder = os.path.join(self.root, "Annotations")
-
+        self.root = os.path.expanduser(os.path.join(root, f"VOC{version}"))
         # read split file
-        split_fp = os.path.join(self.root, "ImageSets", "Main", "{}.txt".format(split))
+        split_fp = os.path.join(self.root, "ImageSets", "Main", f"{split}.txt")
         if not os.path.isfile(split_fp):
-            raise Exception("Split file {} is not found, note that there is no test.txt for VOC dataset".format(split_fp))
+            raise FileNotFoundError(f"`{split_fp}` is not found, note that there is no `test.txt` for VOC-2012")
         with open(split_fp, "r") as f:
-            file_names = [x.strip() for x in f.readlines()]
+            self.file_names = [x.strip() for x in f.readlines()]
 
         self.logger.info("Parsing VOC%s %s dataset...", version, split)
-        self._init_dataset(file_names, annotation_folder)
+        self._init_dataset()
         self.logger.info("Parsing VOC%s %s dataset done", version, split)
 
-    def _get_annotation(self, annotation_fp: str):
+    def _init_dataset(self):
+        # path to image folder, e.g. VOC2007/train2017
+        image_folder = os.path.join(self.root, "JPEGImages")
+        annotation_folder = os.path.join(self.root, "Annotations")
+
+        # skip 0 for background
+        for cls_id, cat in enumerate(self.CLASSES):
+            cls_id = cls_id + 1
+            self.label_map[cat] = cls_id
+            self.label_info[cls_id] = cat
+
+        # build inference for images
+        self.images = [os.path.join(image_folder, x + ".jpg") for x in self.file_names]
+        self.targets = [os.path.join(annotation_folder, x + ".xml") for x in self.file_names]
+
+        self.dataset_mean = VOC_MEAN
+        self.dataset_std = VOC_STD
+
+    def parse_voc_xml(self, annotation_fp: str):
         objects = ET.parse(annotation_fp).findall("object")
         boxes = []
         labels = []
@@ -86,47 +102,22 @@ class VOCPartialDataset(DetectionDataset):
         is_difficult = torch.tensor(is_difficult, dtype=torch.bool)
         return boxes, labels, is_difficult
 
-    def _init_dataset(self, file_names: List[str], annotation_folder):
-        # 0 stand for the background
-        cnt = 0
-        self.label_info[cnt] = "background"
-        for cat in self.CLASSES:
-            cnt += 1
-            self.label_map[cat] = cnt
-            self.label_info[cnt] = cat
+    def get_img_id(self, index: int) -> str:
+        return self.file_names[index]
 
-        # build inference for images
-        for img_id in file_names:
-            if img_id in self.images:
-                raise Exception("duplicated image record")
-            self.images[img_id] = os.path.join(self.image_folder, f"{img_id}.jpg")
-
+    def get_annotation(self, index: int) -> Dict[str, Any]:
         # read bboxes
-        self.logger.info("Reading annotations...")
-        for img_id in tqdm.tqdm(file_names):
-            annotation_fp = os.path.join(annotation_folder, img_id + ".xml")
-            boxes, labels, is_difficult = self._get_annotation(annotation_fp)
-            if not self.keep_difficult:
-                boxes = boxes[~is_difficult]
-                labels = labels[~is_difficult]
-                is_difficult = is_difficult[~is_difficult]
-            target = {
-                "boxes": boxes,
-                "labels": labels,
-                "is_difficult": is_difficult
-            }
-            self.annotations[img_id] = target
-        self.logger.info("Reading annotations done")
-
-        for k, v in list(self.annotations.items()):
-            # remove image with no annotations
-            if len(v["boxes"]) == 0:
-                self.images.pop(k)
-                self.annotations.pop(k)
-
-        self.img_ids = sorted(list(self.images.keys()))
-        self.dataset_mean = VOC_MEAN
-        self.dataset_std = VOC_STD
+        boxes, labels, is_difficult = self.parse_voc_xml(self.targets[index])
+        if not self.keep_difficult:
+            boxes = boxes[~is_difficult]
+            labels = labels[~is_difficult]
+            is_difficult = is_difficult[~is_difficult]
+        target = {
+            "boxes": boxes,
+            "labels": labels,
+            "is_difficult": is_difficult
+        }
+        return target
 
 
 class VOC2007Dataset(VOCPartialDataset):
@@ -172,13 +163,12 @@ class VOC0712Dataset(VOCPartialDataset):
         self.dataset_std = sub_datasets[0].dataset_std
         self.label_map = sub_datasets[0].label_map
         self.label_info = sub_datasets[0].label_info
+        self.keep_difficult = sub_datasets[0].keep_difficult
 
-        self.images = dict()
-        self.img_ids = list()
-        self.annotations = dict()
-        # combination
+        self.images: List[str] = list()
+        self.targets: List[str] = list()
+        self.file_names: List[str] = list()
         for d in sub_datasets:
-            self.images.update(d.images)
-            self.img_ids.extend(d.img_ids)
-            self.annotations.update(d.annotations)
-
+            self.images.extend(d.images)
+            self.targets.extend(d.targets)
+            self.file_names.extend(d.file_names)
