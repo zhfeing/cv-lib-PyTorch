@@ -59,13 +59,17 @@ def all_gather(data: Any, device: torch.device) -> List[Any]:
         return all_gather_object(data, device)
 
 
-def all_gather_object(data: Any, device: torch.device) -> List[Any]:
+def all_gather_object(data: Any) -> List[Any]:
     """
     Run all_gather on arbitrary picklable data (not necessarily tensors)
 
-    Warnings:
-        Do not use pytorch official gather_all_object which has bug when device is
-        not manually specified
+    Note:
+        For NCCL-based processed groups, internal tensor representations of objects
+        must be moved to the GPU device before communication takes place. In this case,
+        the device used is given by torch.cuda.current_device() and it is the user’s
+        responsibility to ensure that this is set so that each rank has an individual
+        GPU, via torch.cuda.set_device().
+
     Args:
         data: any picklable object
     Returns:
@@ -74,34 +78,8 @@ def all_gather_object(data: Any, device: torch.device) -> List[Any]:
     if get_world_size() == 1:
         return [data]
 
-    # serialized to a Tensor
-    buffer = pickle.dumps(data)
-    storage = torch.ByteStorage.from_buffer(buffer)
-    tensor = torch.ByteTensor(storage).to(device)
-
-    # obtain Tensor size of each rank
-    local_size = torch.tensor([tensor.numel()], device=device)
-    size_list = list(torch.tensor([0], device=device) for _ in range(get_world_size()))
-    dist.all_gather(size_list, local_size)
-    size_list = list(int(size.item()) for size in size_list)
-    max_size = max(size_list)
-
-    # receiving Tensor from all ranks
-    # we pad the tensor because torch all_gather does not support
-    # gathering tensors of different shapes
-    tensor_list: List[Tensor] = list()
-    for _ in size_list:
-        tensor_list.append(torch.empty((max_size,), dtype=torch.uint8, device=device))
-    if local_size != max_size:
-        padding = torch.empty(size=(max_size - local_size,), dtype=torch.uint8, device=device)
-        tensor = torch.cat((tensor, padding), dim=0)
-    dist.all_gather(tensor_list, tensor)
-
-    data_list = list()
-    for size, tensor in zip(size_list, tensor_list):
-        buffer = tensor.cpu().numpy().tobytes()[:size]
-        data_list.append(pickle.loads(buffer))
-
+    data_list = [None] * get_world_size()
+    dist.all_gather_object(data_list, data)
     return data_list
 
 
