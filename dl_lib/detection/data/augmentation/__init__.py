@@ -1,7 +1,7 @@
-import logging
 from typing import List, Dict, Any
 
 from .aug import *
+from dl_lib.utils import log_utils
 
 
 __REGISTERED_AUGS__ = {
@@ -16,7 +16,7 @@ __REGISTERED_AUGS__ = {
 
 
 def get_composed_augmentations(aug_list: List[Dict[str, Any]]):
-    logger = logging.getLogger("get_composed_augmentations")
+    logger = log_utils.get_master_logger("get_composed_augmentations")
     augmentations = list()
     for aug in aug_list:
         assert len(aug) == 1, "one aug each time"

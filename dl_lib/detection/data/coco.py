@@ -2,7 +2,6 @@ from collections import defaultdict
 import json
 import os
 from typing import Callable, Tuple
-import logging
 
 import tqdm
 from PIL.Image import Image
@@ -12,6 +11,7 @@ from torch import FloatTensor, LongTensor
 from torchvision.datasets.utils import verify_str_arg
 
 from .detection_dataset import DetectionDataset
+from dl_lib.utils import log_utils
 
 
 COCO_MEAN = [0.485, 0.456, 0.406]
@@ -37,7 +37,7 @@ class CocoDetection(DetectionDataset):
         verify_str_arg(split, "split", ("train", "val"))
         self.keep_crowd = keep_crowd
 
-        self.logger = logging.getLogger("CocoDetection")
+        self.logger = log_utils.get_master_logger("CocoDetection")
 
         # path to image folder, e.g. coco_root/train2017
         self.image_folder = os.path.join(self.root, f"{split}{version}")

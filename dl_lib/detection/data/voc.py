@@ -1,24 +1,21 @@
-import enum
 import os
 from typing import Callable, Tuple, List, Optional, Dict, Any
-import logging
 import xml.etree.ElementTree as ET
-import collections
 
-import tqdm
 from PIL.Image import Image
 
 import torch
 from torchvision.datasets.utils import verify_str_arg
 
 from .detection_dataset import DetectionDataset
+from dl_lib.utils import log_utils
 
 
 VOC_MEAN = [0.485, 0.456, 0.406]
 VOC_STD = [0.229, 0.224, 0.225]
 
 
-class VOCPartialDataset(DetectionDataset):
+class VOCBaseDataset(DetectionDataset):
     """
     Pascal VOC <http://host.robots.ox.ac.uk/pascal/VOC/> Detection Dataset.
     Only support 2007 and 2012 datasets
@@ -38,15 +35,27 @@ class VOCPartialDataset(DetectionDataset):
             version: str = "2007",
             resize: Optional[Tuple[int]] = (300, 300),
             augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
-            keep_difficult: bool = False
+            keep_difficult: bool = False,
+            make_partial: List[int] = None
     ):
+        """
+        Args:
+            root: root to voc path which contains [`VOC2007`  `VOC2012`] folders
+            split: split of dataset, e.g. `train`, `val`, `test` and `trainval`. Warning: VOC2012 has no
+                test split
+            version: `2007` or `2012`
+            resize: all images will be resized to given size. If `None`, all images will not be resized
+            make_partial: only keep objects with given classes, w.r.t `self.CLASSES`. If `None`, all
+                objects will be perserved. For multitask learning which one task has 10 classes and the
+                other task has others classes
+        """
         super().__init__(resize, augmentations)
         self.keep_difficult = keep_difficult
 
         verify_str_arg(version, "version", ("2007", "2012"))
         verify_str_arg(split, "split", ("train", "val", "test", "trainval"))
 
-        self.logger = logging.getLogger("VOCDetection")
+        self.logger = log_utils.get_master_logger("VOCDetection")
         self.version = version
         # parse folders
         self.root = os.path.expanduser(os.path.join(root, f"VOC{version}"))
@@ -58,13 +67,17 @@ class VOCPartialDataset(DetectionDataset):
             self.file_names = [x.strip() for x in f.readlines()]
 
         self.logger.info("Parsing VOC%s %s dataset...", version, split)
-        self._init_dataset()
+        self._init_dataset(make_partial)
         self.logger.info("Parsing VOC%s %s dataset done", version, split)
 
-    def _init_dataset(self):
+    def _init_dataset(self, make_partial: List[int] = None):
         # path to image folder, e.g. VOC2007/train2017
         image_folder = os.path.join(self.root, "JPEGImages")
         annotation_folder = os.path.join(self.root, "Annotations")
+
+        if make_partial is not None:
+            self.CLASSES = (self.CLASSES[c] for c in sorted(make_partial))
+            self.logger.warning("Partial VOC dataset with classes: %s", self.CLASSES)
 
         # skip 0 for background
         for cls_id, cat in enumerate(self.CLASSES):
@@ -86,6 +99,9 @@ class VOCPartialDataset(DetectionDataset):
         is_difficult = []
         for obj in objects:
             class_name = obj.find('name').text.lower().strip()
+            # remove abandoned classes
+            if class_name not in self.CLASSES:
+                continue
             bbox = obj.find('bndbox')
             # VOC dataset format follows Matlab, in which indexes start from 0
             x1 = int(bbox.find('xmin').text) - 1
@@ -120,40 +136,36 @@ class VOCPartialDataset(DetectionDataset):
         return target
 
 
-class VOC2007Dataset(VOCPartialDataset):
-    def __init__(
-            self,
-            root: str,
-            split: str = "trainval",
-            resize: Optional[Tuple[int]] = (300, 300),
-            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
-    ):
-        super().__init__(root, split, version="2007", resize=resize, augmentations=augmentations)
+class VOC2007Dataset(VOCBaseDataset):
+    def __init__(self, **kwargs):
+        super().__init__(version="2007", **kwargs)
 
 
-class VOC0712Dataset(VOCPartialDataset):
+class VOC0712Dataset(VOCBaseDataset):
     """
     Combined VOC2007 and VOC2012 partial
     """
     def __init__(
             self,
-            root: str,
             split: str = "trainval",
             split_07: Optional[str] = "trainval",
             split_12: Optional[str] = "trainval",
-            resize: Optional[Tuple[int]] = (300, 300),
-            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+            **kwargs
     ):
-        sub_datasets: List[VOCPartialDataset] = list()
+        sub_datasets: List[VOCBaseDataset] = list()
         if split == "test":
-            sub_datasets += [VOC2007Dataset(root, split, resize, augmentations)]
+            sub_datasets += [VOC2007Dataset(split=split, **kwargs)]
         else:
             sub_datasets += [
-                VOC2007Dataset(root, split_07, resize, augmentations),
-                VOCPartialDataset(root, split_12, "2012", resize, augmentations)
+                VOC2007Dataset(split=split_07, **kwargs),
+                VOCBaseDataset(split=split_12, version="2012", **kwargs)
             ]
 
         # adaption with `VOCPartialDataset`
+        resize = kwargs["resize"]
+        augmentations = kwargs["augmentations"]
+        root = kwargs["root"]
+
         self.resize = tuple(resize) if isinstance(resize, list) else resize
         self.augmentations = augmentations
 

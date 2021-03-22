@@ -37,13 +37,13 @@ def get_dataset(
     val_cfg = dataset_cfg["val"]
 
     train_dataset: DetectionDataset = dataset(
-        root,
+        root=root,
         augmentations=train_augmentations,
         **train_cfg
     )
 
     val_dataset: DetectionDataset = dataset(
-        root,
+        root=root,
         augmentations=val_augmentations,
         **val_cfg
     )
