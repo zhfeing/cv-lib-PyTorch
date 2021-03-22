@@ -1,4 +1,3 @@
-import logging
 from typing import Dict, Any
 from copy import deepcopy
 
@@ -6,6 +5,7 @@ from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR, CosineAnnealing
 
 from .schedulers import WarmUpLR, ConstantLR, PolynomialLR
 from dl_lib.utils import to_json_str
+from dl_lib.utils import log_utils
 
 
 __REGISTERED_SCHEDULERS__ = {
@@ -27,7 +27,7 @@ def get_scheduler(optimizer, scheduler_cfg: Dict[str, Dict[str, Any]]):
             gamma: 0.1
     ```
     """
-    logger = logging.getLogger("get_scheduler")
+    logger = log_utils.get_master_logger("get_scheduler")
 
     scheduler_dict = deepcopy(scheduler_cfg)
     if scheduler_dict is None:
@@ -36,7 +36,7 @@ def get_scheduler(optimizer, scheduler_cfg: Dict[str, Dict[str, Any]]):
 
     s_type = scheduler_dict.pop("name")
 
-    logging.info("Using {} scheduler with\n{}".format(s_type, to_json_str(scheduler_dict)))
+    logger.info("Using {} scheduler with\n{}".format(s_type, to_json_str(scheduler_dict)))
 
     if "warmup_iters" in scheduler_dict:
         warmup_dict = {}

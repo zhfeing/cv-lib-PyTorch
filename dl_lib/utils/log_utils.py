@@ -5,14 +5,17 @@ import shutil
 
 from torch.utils.tensorboard import SummaryWriter
 
+import dl_lib.distributed as dist_utils
+
 
 __all__ = [
-    "get_logger",
-    "rm_tf_logger"
+    "get_root_logger",
+    "rm_tf_logger",
+    "get_master_logger"
 ]
 
 
-def get_logger(
+def get_root_logger(
     level: int,
     logger_fp: str,
     name: Optional[str] = None,
@@ -41,3 +44,52 @@ def rm_tf_logger(writer: SummaryWriter):
     shutil.rmtree(log_dir)
     time.sleep(1.5)
 
+
+class DumpLogger:
+    def setLevel(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def warning(self, *args, **kwargs):
+        pass
+
+    def warn(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def exception(self, *args, exc_info=True, **kwargs):
+        pass
+
+    def critical(self, *args, **kwargs):
+        pass
+
+    fatal = critical
+
+    def log(self, *args, **kwargs):
+        pass
+
+    def makeRecord(self, *args, **kwargs):
+        pass
+
+    def _log(self, *args, **kwargs):
+        pass
+
+    def handle(self, record):
+        pass
+
+
+def get_master_logger(name: str = None):
+    """
+    Get logger only work on the master process
+    """
+    if dist_utils.is_main_process():
+        return logging.getLogger(name)
+    else:
+        return DumpLogger()

@@ -6,7 +6,7 @@ from typing import Dict, Any, Tuple
 
 from torch.utils.tensorboard import SummaryWriter
 
-from .utils import get_logger
+from .utils import get_root_logger
 
 
 def get_cfg(cfg_filepath: str) -> Dict[str, Any]:
@@ -42,7 +42,7 @@ def get_train_logger(logdir: str, filename: str) -> Tuple[logging.Logger, str]:
         train_log_dir,
         "training-" + filename + ".log"
     )
-    logger = get_logger(
+    logger = get_root_logger(
         level=logging.INFO,
         mode="w",
         name=None,
@@ -58,7 +58,7 @@ def get_eval_logger(logdir: str) -> Tuple[logging.Logger, str]:
         logdir,
         "eval.log"
     )
-    logger = get_logger(
+    logger = get_root_logger(
         level=logging.INFO,
         mode="w",
         name=None,

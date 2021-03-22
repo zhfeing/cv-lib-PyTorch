@@ -5,12 +5,9 @@ from typing import Any
 from collections import OrderedDict
 import json
 import pickle
-import logging
 
 import numpy as np
 
-
-from torch.utils.data import DataLoader
 import torch
 from torchvision.datasets.folder import IMG_EXTENSIONS
 from torchvision.datasets.folder import has_file_allowed_extension

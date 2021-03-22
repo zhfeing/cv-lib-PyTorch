@@ -1,11 +1,12 @@
 import os
-import logging
 import gc
 import threading
 from typing import List
 
 import torch
 from torch import Tensor
+
+from dl_lib.utils import log_utils
 
 
 __all__ = [
@@ -46,7 +47,7 @@ def all_tensors():
 
 
 def preserve_gpu_with_id(gpu_id: int, preserve_percent: float = 0.95):
-    logger = logging.getLogger("preserve_gpu_with_id")
+    logger = log_utils.get_master_logger("preserve_gpu_with_id")
     if not torch.cuda.is_available():
         logger.warning("no gpu avaliable exit...")
         return
@@ -74,7 +75,7 @@ def preserve_gpu_with_id(gpu_id: int, preserve_percent: float = 0.95):
 
 
 def preserve_memory(preserve_percent: float = 0.99):
-    logger = logging.getLogger("preserve_memory")
+    logger = log_utils.get_master_logger("preserve_memory")
     if not torch.cuda.is_available():
         logger.warning("no gpu avaliable exit...")
         return

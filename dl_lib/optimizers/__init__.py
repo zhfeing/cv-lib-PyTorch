@@ -1,11 +1,11 @@
-import logging
 from typing import Dict, Any, List
 import copy
 
 from torch import nn
 from torch.optim import *
 
-from ..utils import to_json_str
+from dl_lib.utils import to_json_str
+from dl_lib.utils import log_utils
 
 
 __REGISTERED_OPTIMIZERS__: Dict[str, Optimizer] = {
@@ -31,7 +31,7 @@ def get_optimizer(params: List[Dict[str, nn.Parameter]], optimizer_cfg: Dict[str
             momentum: 0.9
     ```
     """
-    logger = logging.getLogger("get_optimizer")
+    logger = log_utils.get_master_logger("get_optimizer")
 
     opt_name = optimizer_cfg["name"]
     optim_cfg = copy.deepcopy(optimizer_cfg)
