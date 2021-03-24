@@ -35,7 +35,7 @@ def get_tb_writer(logdir, filename) -> Tuple[SummaryWriter, str]:
     return writer, logger_fp
 
 
-def get_train_logger(logdir: str, filename: str) -> Tuple[logging.Logger, str]:
+def get_train_logger(logdir: str, filename: str, mode="w") -> Tuple[logging.Logger, str]:
     train_log_dir = os.path.join(logdir, "train-logs")
     os.makedirs(train_log_dir, exist_ok=True)
     logger_fp = os.path.join(
@@ -44,7 +44,7 @@ def get_train_logger(logdir: str, filename: str) -> Tuple[logging.Logger, str]:
     )
     logger = get_root_logger(
         level=logging.INFO,
-        mode="w",
+        mode=mode,
         name=None,
         logger_fp=logger_fp
     )

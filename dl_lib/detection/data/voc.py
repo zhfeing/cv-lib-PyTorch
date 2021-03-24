@@ -57,6 +57,7 @@ class VOCBaseDataset(DetectionDataset):
 
         self.logger = log_utils.get_master_logger("VOCDetection")
         self.version = version
+        self.split = split
         # parse folders
         self.root = os.path.expanduser(os.path.join(root, f"VOC{version}"))
         # read split file
@@ -76,8 +77,9 @@ class VOCBaseDataset(DetectionDataset):
         annotation_folder = os.path.join(self.root, "Annotations")
 
         if make_partial is not None:
-            self.CLASSES = (self.CLASSES[c] for c in sorted(make_partial))
-            self.logger.warning("Partial VOC dataset with classes: %s", self.CLASSES)
+            make_partial.sort()
+            self.CLASSES = tuple(self.CLASSES[c] for c in make_partial)
+            self.logger.info("Partial VOC%s %s dataset with classes: %s", self.version, self.split, str(self.CLASSES))
 
         # skip 0 for background
         for cls_id, cat in enumerate(self.CLASSES):
@@ -113,7 +115,7 @@ class VOCBaseDataset(DetectionDataset):
             labels.append(self.label_map[class_name])
             is_difficult.append(int(obj.find('difficult').text))
 
-        boxes = torch.tensor(boxes, dtype=torch.float)
+        boxes = torch.tensor(boxes, dtype=torch.float).reshape(-1, 4)
         labels = torch.tensor(labels, dtype=torch.long)
         is_difficult = torch.tensor(is_difficult, dtype=torch.bool)
         return boxes, labels, is_difficult
@@ -171,6 +173,7 @@ class VOC0712Dataset(VOCBaseDataset):
 
         self.root = os.path.expanduser(root)
 
+        self.CLASSES = sub_datasets[0].CLASSES
         self.dataset_mean = sub_datasets[0].dataset_mean
         self.dataset_std = sub_datasets[0].dataset_std
         self.label_map = sub_datasets[0].label_map
@@ -184,3 +187,4 @@ class VOC0712Dataset(VOCBaseDataset):
             self.images.extend(d.images)
             self.targets.extend(d.targets)
             self.file_names.extend(d.file_names)
+            assert self.CLASSES == d.CLASSES, "all sub dataset must have the same `CLASSES`"
