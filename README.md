@@ -1,6 +1,6 @@
-# deep-learning-lib
+# CV Library for PyTorch
 
-Utils for deep learning training, evaluating...
+Utils for computer vision in deep learning training and evaluating, e.g. classification, object detection...
 
 ## Classification
 
@@ -32,6 +32,7 @@ All models support middle feature extracting, which is crucial for distillation.
 ## Utils
 
 ### Distributed Logger
+1. MultiProcessLoggerListener
 
 ### Metrics
 1. Classification
@@ -43,9 +44,10 @@ All models support middle feature extracting, which is crucial for distillation.
 3. `WarmUpLR`
 
 ### Configure Parsing
+Parsing `.yml` training configure file
 
 ### Cuda Utils
 1. Preserve Memory
 
 ### Distributed Utils
-
+1. Distributed sync utils
