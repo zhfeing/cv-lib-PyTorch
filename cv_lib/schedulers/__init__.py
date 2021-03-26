@@ -4,8 +4,8 @@ from copy import deepcopy
 from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR, CosineAnnealingLR
 
 from .schedulers import WarmUpLR, ConstantLR, PolynomialLR
-from dl_lib.utils import to_json_str
-from dl_lib.utils import log_utils
+from cv_lib.utils import to_json_str
+from cv_lib.utils import log_utils
 
 
 __REGISTERED_SCHEDULERS__ = {

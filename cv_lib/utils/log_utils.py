@@ -5,7 +5,7 @@ import shutil
 
 from torch.utils.tensorboard import SummaryWriter
 
-import dl_lib.distributed as dist_utils
+import cv_lib.distributed as dist_utils
 
 
 __all__ = [

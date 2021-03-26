@@ -6,7 +6,7 @@ from typing import List
 import torch
 from torch import Tensor
 
-from dl_lib.utils import log_utils
+from cv_lib.utils import log_utils
 
 
 __all__ = [

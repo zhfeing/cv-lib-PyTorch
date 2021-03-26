@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 
 from .aug import *
-from dl_lib.utils import log_utils
+from cv_lib.utils import log_utils
 
 
 __REGISTERED_AUGS__ = {

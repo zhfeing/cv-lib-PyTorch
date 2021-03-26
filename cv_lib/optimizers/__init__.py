@@ -4,8 +4,8 @@ import copy
 from torch import nn
 from torch.optim import *
 
-from dl_lib.utils import to_json_str
-from dl_lib.utils import log_utils
+from cv_lib.utils import to_json_str
+from cv_lib.utils import log_utils
 
 
 __REGISTERED_OPTIMIZERS__: Dict[str, Optimizer] = {

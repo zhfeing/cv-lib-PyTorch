@@ -11,7 +11,7 @@ from torch import FloatTensor, LongTensor
 from torchvision.datasets.utils import verify_str_arg
 
 from .detection_dataset import DetectionDataset
-from dl_lib.utils import log_utils
+from cv_lib.utils import log_utils
 
 
 COCO_MEAN = [0.485, 0.456, 0.406]
