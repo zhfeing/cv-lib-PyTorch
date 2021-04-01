@@ -1,20 +1,25 @@
+import copy
+from typing import Dict, Any
+
 from torch.utils.data import Dataset
 
-from .cifar import get_cifar_10, get_cifar_100
-from .imagenet import get_imagenet
-from .tiny_imagenet import get_tiny_imagenet
+from .cifar import CIFAR10, CIFAR100
+from .imagenet import ImageNet
+from .tiny_imagenet import TinyImagenet
 
 
 DATASET_DICT = {
-    "cifar-10": get_cifar_10,
-    "cifar-100": get_cifar_100,
-    "cifar10": get_cifar_10,
-    "cifar100": get_cifar_100,
-    "imagenet": get_imagenet,
-    "tiny-imagenet": get_tiny_imagenet,
+    "cifar-10": CIFAR10,
+    "cifar-100": CIFAR100,
+    "cifar10": CIFAR10,
+    "cifar100": CIFAR100,
+    "imagenet": ImageNet,
+    "tiny-imagenet": TinyImagenet,
 }
 
 
-def get_dataset(name: str, root: str, split: str = "train") -> Dataset:
-    fn = DATASET_DICT[name]
-    return fn(root=root, split=split)
+def get_dataset(dataset_cfg: Dict[str, Any], **kwargs) -> Dataset:
+    cfg = copy.deepcopy(dataset_cfg)
+    name: str = cfg.pop("name")
+    return DATASET_DICT[name.lower()](**cfg, **kwargs)
+

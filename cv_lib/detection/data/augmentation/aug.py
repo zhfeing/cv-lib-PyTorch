@@ -8,7 +8,7 @@ import abc
 
 from PIL.Image import Image
 
-import torchvision.transforms as transforms
+import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 from .functional import crop, pad_bottom_right, resize
@@ -26,7 +26,9 @@ __all__ = [
     "RandomPadBottomRight",
     "RandomResize",
     "RandomSelect",
-    "RandomErasing"
+    "RandomErasing",
+    "ToTensor",
+    "Normalize"
 ]
 
 
@@ -89,7 +91,7 @@ class RandomHorizontalFlip(BaseTransform):
 class ColorJitter(BaseTransform):
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
         super().__init__()
-        self.color_jitter = transforms.ColorJitter(brightness, contrast, saturation, hue)
+        self.color_jitter = T.ColorJitter(brightness, contrast, saturation, hue)
 
     def __call__(
         self,
@@ -126,7 +128,7 @@ class RandomCrop(BaseTransform):
         img: Image,
         target: Dict[str, Any]
     ) -> Tuple[Image, Dict[str, Any]]:
-        region = transforms.RandomCrop.get_params(img, self.size)
+        region = T.RandomCrop.get_params(img, self.size)
         return crop(img, target, region)
 
 
@@ -142,7 +144,7 @@ class RandomSizeCrop(BaseTransform):
     ) -> Tuple[Image, Dict[str, Any]]:
         w = random.randint(self.min_size, min(img.width, self.max_size))
         h = random.randint(self.min_size, min(img.height, self.max_size))
-        region = transforms.RandomCrop.get_params(img, [h, w])
+        region = T.RandomCrop.get_params(img, [h, w])
         return crop(img, target, region)
 
 
@@ -217,7 +219,7 @@ class RandomSelect(BaseTransform):
 
 class RandomErasing(BaseTransform):
     def __init__(self, p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False):
-        self.eraser = transforms.RandomErasing(p, scale, ratio, value, inplace)
+        self.eraser = T.RandomErasing(p, scale, ratio, value, inplace)
 
     def __call__(
         self,
@@ -226,3 +228,30 @@ class RandomErasing(BaseTransform):
     ) -> Tuple[Image, Dict[str, Any]]:
         return self.eraser(img), target
 
+
+class ToTensor(BaseTransform):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(
+        self,
+        img: Image,
+        target: Dict[str, Any]
+    ) -> Tuple[Image, Dict[str, Any]]:
+        img = TF.to_tensor(img)
+        return img, target
+
+
+class Normalize(BaseTransform):
+    def __init__(self, mean, std):
+        super().__init__()
+        self.mean = mean
+        self.std = std
+
+    def __call__(
+        self,
+        img: Image,
+        target: Dict[str, Any]
+    ) -> Tuple[Image, Dict[str, Any]]:
+        img = TF.normalize(img, self.mean, self.std)
+        return img, target

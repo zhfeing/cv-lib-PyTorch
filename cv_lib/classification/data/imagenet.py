@@ -14,6 +14,9 @@ META_FILE = "meta.bin"
 
 
 class ImageNet(Dataset):
+    MEAN = (0.485, 0.456, 0.406)
+    STD = (0.229, 0.224, 0.225)
+
     def __init__(
         self,
         root: str,
@@ -116,22 +119,6 @@ class ImageNet(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def __repr__(self):
-        head = "Dataset " + self.__class__.__name__
-        body = ["Number of datapoints: {}".format(self.__len__())]
-        if self.root is not None:
-            body.append("Root location: {}".format(self.root))
-        body += self.extra_repr().splitlines()
-        if hasattr(self, "transforms") and self.transforms is not None:
-            body += [repr(self.transforms)]
-        lines = [head] + [" " * self._repr_indent + line for line in body]
-        return '\n'.join(lines)
-
-    def _format_transform_repr(self, transform, head):
-        lines = transform.__repr__().splitlines()
-        return (["{}{}".format(head, lines[0])] +
-                ["{}{}".format(" " * len(head), line) for line in lines[1:]])
-
 
 def load_meta_file(root, file=None):
     if file is None:
@@ -143,13 +130,6 @@ def load_meta_file(root, file=None):
     else:
         msg = ("The meta file {} is not present in the root directory or is corrupted. "
                "This file is automatically created by the ImageNet dataset.")
-        raise RuntimeError(msg.format(file, root))
-
-
-def _verify_archive(root, file, md5):
-    if not check_integrity(os.path.join(root, file), md5):
-        msg = ("The archive {} is not present in the root directory or is corrupted. "
-               "You need to download it externally and place it in {}.")
         raise RuntimeError(msg.format(file, root))
 
 
@@ -251,7 +231,7 @@ def make_dataset(
 
 
 def get_imagenet(root: str, split: str = "train", num_image_per_class: int = None) -> Dataset:
-    normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    normalize = transforms.Normalize(ImageNet.MEAN, ImageNet.STD)
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
