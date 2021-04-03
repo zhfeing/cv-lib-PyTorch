@@ -79,8 +79,11 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Unsupported value encountered.")
 
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+def count_parameters(model, include_no_grad: bool = False):
+    if include_no_grad:
+        return sum(p.numel() for p in model.parameters())
+    else:
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
 def to_json_str(obj: Any, indent: int = 4):
