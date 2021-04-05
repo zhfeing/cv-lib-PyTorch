@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 import tqdm
 
 import torch
@@ -206,7 +206,7 @@ def make_dataset(
     num_image_per_class: int,
     extensions: Tuple[str] = None,
     is_valid_file: Optional[bool] = None,
-):
+) -> List[Tuple[str, int]]:
     instances = []
     directory = os.path.expanduser(directory)
     both_none = extensions is None and is_valid_file is None
