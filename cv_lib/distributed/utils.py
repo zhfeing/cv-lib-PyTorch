@@ -1,4 +1,3 @@
-import pickle
 from typing import Any, Callable, Dict, List
 
 import torch
@@ -164,4 +163,12 @@ def run_on_main_process(func: Callable, *args, **kwargs):
     if is_main_process():
         func(*args, **kwargs)
     barrier()
+
+
+def boardcast_tensor(tensor: Tensor, src: int):
+    if get_world_size() > 1:
+        dist.broadcast(
+            tensor=tensor,
+            src=src
+        )
 
