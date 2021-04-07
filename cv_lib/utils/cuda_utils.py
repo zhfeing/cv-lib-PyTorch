@@ -72,7 +72,7 @@ def preserve_gpu_with_id(gpu_id: int, preserve_percent: float = 0.95):
         x = torch.empty(alloc_mem).to(torch.device("cuda:{}".format(gpu_id)))
         del x
     except ImportError:
-        logger.warning("No cupy found, memory cannot be perserved")
+        logger.warning("No cupy found, memory cannot be preserved")
 
 
 def preserve_memory(preserve_percent: float = 0.99):

@@ -46,7 +46,7 @@ class VOCBaseDataset(DetectionDataset):
             version: `2007` or `2012`
             resize: all images will be resized to given size. If `None`, all images will not be resized
             make_partial: only keep objects with given classes, w.r.t `self.CLASSES`. If `None`, all
-                objects will be perserved. For multitask learning which one task has 10 classes and the
+                objects will be preserved. For multitask learning which one task has 10 classes and the
                 other task has others classes
         """
         super().__init__(resize, augmentations)
