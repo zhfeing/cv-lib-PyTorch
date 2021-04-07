@@ -1,5 +1,5 @@
 import pickle
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import torch
 from torch import Tensor
@@ -18,6 +18,7 @@ __all__ = [
     "reduce_dict",
     "cal_split_args",
     "barrier",
+    "run_on_main_process"
 ]
 
 
@@ -157,4 +158,10 @@ def cal_split_args(batch_size: int, n_workers: int, ngpus_per_node: int):
 def barrier():
     if get_world_size() > 1:
         dist.barrier()
+
+
+def run_on_main_process(func: Callable, *args, **kwargs):
+    if is_main_process():
+        func(*args, **kwargs)
+    barrier()
 
