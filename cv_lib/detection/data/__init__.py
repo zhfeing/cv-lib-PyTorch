@@ -1,3 +1,4 @@
+import copy
 from typing import Callable, Dict, Any, Tuple
 from .dataloader import get_dataloader
 from .detection_dataset import DetectionDataset
@@ -27,25 +28,29 @@ def get_dataset(
                 xxx: train configs
             val:
                 xxx: val configs
+            xxx: common configs (for both train and val dictionary)
         }
     """
     # Setup Dataloader
-    dataset = __REGISTERED_DATASETS__[dataset_cfg["name"]]
-    root = dataset_cfg["root"]
-
-    train_cfg = dataset_cfg["train"]
-    val_cfg = dataset_cfg["val"]
+    dataset_cfg = copy.deepcopy(dataset_cfg)
+    name = dataset_cfg.pop("name")
+    dataset = __REGISTERED_DATASETS__[name]
+    root = dataset_cfg.pop("root")
+    train_cfg = dataset_cfg.pop("train")
+    val_cfg = dataset_cfg.pop("val")
 
     train_dataset: DetectionDataset = dataset(
         root=root,
         augmentations=train_augmentations,
-        **train_cfg
+        **train_cfg,
+        **dataset_cfg
     )
 
     val_dataset: DetectionDataset = dataset(
         root=root,
         augmentations=val_augmentations,
-        **val_cfg
+        **val_cfg,
+        **dataset_cfg
     )
 
     assert train_dataset.n_classes == val_dataset.n_classes
