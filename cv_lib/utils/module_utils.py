@@ -54,7 +54,7 @@ class MidExtractor:
                     feat = output if self.require_output else input
                     self.features[name] = feat
 
-                handle = self.model.register_forward_hook(forward_hook)
+                handle = module.register_forward_hook(forward_hook)
                 self.hooks[name] = handle
 
     def _remove_hooks(self):
