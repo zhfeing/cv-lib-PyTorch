@@ -32,9 +32,6 @@ class MidExtractor:
             self.features[name] = None
             self.hooks[name] = None
 
-        self.logger = logging.getLogger("mid_extractor")
-        self.logger.info("Extract names:\n%s", to_json_str(self.extract_names))
-
         if register_now:
             self.register_forward_hooks()
 
