@@ -1,15 +1,13 @@
 import collections
-import logging
 from typing import List, OrderedDict, Any
 
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.hooks import RemovableHandle
-
-from cv_lib.utils import to_json_str
 
 
 __all__ = [
-    "MidExtractor"
+    "MidExtractor",
+    "Identity"
 ]
 
 
@@ -59,3 +57,10 @@ class MidExtractor:
             hook.remove()
             self.logger.info("Removed hook: %s", name)
 
+
+class Identity(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x: Tensor):
+        return x
