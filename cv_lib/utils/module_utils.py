@@ -40,7 +40,10 @@ class MidExtractor:
             self.hooks[name] = None
 
     def register_forward_hooks(self):
-        for name, module in self.model.named_modules():
+        raw_model = self.model
+        if isinstance(raw_model, nn.parallel.DistributedDataParallel):
+            raw_model = raw_model.module
+        for name, module in raw_model.named_modules():
             if name in self.extract_names:
                 setattr(module, "name", name)
 
