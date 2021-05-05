@@ -53,7 +53,7 @@ class VOCBaseDataset(DetectionDataset):
         self.keep_difficult = keep_difficult
 
         verify_str_arg(version, "version", ("2007", "2012"))
-        verify_str_arg(split, "split", ("train", "val", "test", "trainval"))
+        verify_str_arg(split, "split", ("train", "val", "test", "trainval", "check"))
 
         self.logger = log_utils.get_master_logger("VOCDetection")
         self.version = version
