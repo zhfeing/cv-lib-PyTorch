@@ -9,10 +9,15 @@ from torch import Tensor, LongTensor
 import torchvision.transforms.functional as TF
 import torchvision.ops.boxes as box_ops
 
-from ..data.augmentation import UnNormalize
+from cv_lib.detection.data.augmentation import UnNormalize
 
 
-def draw_bbox(img: Union[Image.Image, np.ndarray], bbox_sizes: List[int], bbox_labels: List[int]):
+def draw_bbox(
+    img: Union[Image.Image, np.ndarray],
+    bbox_sizes: List[int],
+    bbox_labels: List[int],
+    color: Tuple[int] = (0, 0, 255)
+):
     """
     Draw bounding boxes to image
     Args:
@@ -30,7 +35,7 @@ def draw_bbox(img: Union[Image.Image, np.ndarray], bbox_sizes: List[int], bbox_l
     for (x1, y1, x2, y2), bbox_label in zip(bbox_sizes, bbox_labels):
         p1 = (x1, y1)
         p2 = (x2, y2)
-        cv2.rectangle(img, p1, p2, (0, 0, 255), 2)
+        cv2.rectangle(img, p1, p2, color, 2)
         cv2.putText(
             img,
             "{}".format(bbox_label),
@@ -47,7 +52,8 @@ def draw_img_preds(
     img: Tensor,
     bboxes: Tensor,
     bbox_labels: LongTensor,
-    img_size: Tuple[int]
+    img_size: Tuple[int],
+    color: Tuple[int] = (0, 0, 255)
 ) -> np.ndarray:
     """
     Args:
@@ -66,7 +72,7 @@ def draw_img_preds(
         bboxes[:, [1, 3]] *= img_size[0]
     bboxes = bboxes.round().to(dtype=torch.int, device="cpu").tolist()
     bbox_labels = bbox_labels.cpu().tolist()
-    img = draw_bbox(img, bboxes, bbox_labels)
+    img = draw_bbox(img, bboxes, bbox_labels, color=color)
     return img
 
 
@@ -78,7 +84,8 @@ def vis_bbox(
     dataset_mean: Tuple[int],
     dataset_std: Tuple[int],
     bbox_fmt: str = "cxcywh",
-    save_fp: Optional[str] = None
+    save_fp: Optional[str] = None,
+    color: Tuple[int] = (0, 0, 255)
 ) -> np.ndarray:
     """
     Return: opencv type image
@@ -86,7 +93,7 @@ def vis_bbox(
     un_normalize = UnNormalize(dataset_mean, dataset_std)
     img = un_normalize(img) * 255
     bboxes = box_ops.box_convert(bboxes, bbox_fmt, "xyxy")
-    img = draw_img_preds(img, bboxes, bbox_labels, img_size)
+    img = draw_img_preds(img, bboxes, bbox_labels, img_size, color=color)
     if save_fp is not None:
         cv2.imwrite(save_fp, img)
     return img
