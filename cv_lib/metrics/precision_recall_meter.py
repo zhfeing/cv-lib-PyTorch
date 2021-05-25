@@ -106,7 +106,7 @@ class VOCPrecisionRecallMeter(Meter):
             self.gt_difficult
         )
         # for each image
-        for pred_bbox, pred_label, pred_score, gt_bbox, gt_label, gt_difficult in tqdm.tqdm(batch_iter, total=len(self.pred_bboxes)):
+        for pred_bbox, pred_label, pred_score, gt_bbox, gt_label, gt_difficult in tqdm.tqdm(batch_iter, total=len(self.pred_bboxes), desc="Image"):
             # convert difficult
             if gt_difficult is None:
                 gt_difficult = torch.zeros(gt_bbox.shape[0], device=gt_bbox.device, dtype=torch.bool)

@@ -11,9 +11,8 @@ def get_sampler(
 ) -> Tuple[Sampler, Sampler]:
     if distributed:
         train_sampler = DistributedSampler(train_dataset, shuffle=True)
-        val_sampler = DistributedSampler(val_dataset, shuffle=False)
     else:
         train_sampler = RandomSampler(train_dataset)
-        val_sampler = SequentialSampler(val_dataset)
+    val_sampler = SequentialSampler(val_dataset)
     return train_sampler, val_sampler
 

@@ -17,7 +17,8 @@ __all__ = [
     "reduce_dict",
     "cal_split_args",
     "barrier",
-    "run_on_main_process"
+    "run_on_main_process",
+    "broadcast_tensor"
 ]
 
 
@@ -165,7 +166,7 @@ def run_on_main_process(func: Callable, *args, **kwargs):
     barrier()
 
 
-def boardcast_tensor(tensor: Tensor, src: int):
+def broadcast_tensor(tensor: Tensor, src: int):
     if get_world_size() > 1:
         dist.broadcast(
             tensor=tensor,
