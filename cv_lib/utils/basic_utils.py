@@ -96,10 +96,12 @@ def float_to_uint_image(img: np.ndarray) -> np.ndarray:
 
 
 def save_object(obj: Any, fp: str):
+    fp = os.path.expanduser(fp)
     with open(fp, "wb") as f:
         return pickle.dump(obj, f)
 
 
 def load_object(fp: str) -> Any:
+    fp = os.path.expanduser(fp)
     with open(fp, "rb") as f:
         return pickle.load(f)

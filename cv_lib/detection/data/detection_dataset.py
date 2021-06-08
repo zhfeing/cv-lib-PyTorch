@@ -15,8 +15,8 @@ class DetectionDataset(Dataset):
     Base Detection Dataset
 
     Inhered Class Requirements:
-        `img_ids`: list of img_id, the `img_id` is the unique id for each image (could be str or int)
-        `images`: dict e.g. {img_id: img_filepath}
+        `img_ids`: list of img_id, the `img_id` is the unique id for each image must be string
+        `images`: list of image filepath
         `label_map`: OrderedDict[str, int], map a str label to its id != 0, no background
         `label_info`: OrderedDict[int, str], map a label id to its str, 0 for background
         `dataset_mean`: List[float]
@@ -83,12 +83,13 @@ class DetectionDataset(Dataset):
         bboxes: Tensor = target["boxes"]
         assert bboxes.shape[1] == 4 and bboxes.ndim == 2, "bound box must have shape: [n, 4]"
         # convert (xyxy)
-        bboxes = box_ops.box_convert(bboxes, "xywh", "cxcywh")
+        bboxes = box_ops.box_convert(bboxes, "xywh", "xyxy")
         # normalize
         bboxes[:, (0, 2)] /= img_w
         bboxes[:, (1, 3)] /= img_h
         # bbox must not larger than image
         bboxes.clamp_(0, 1)
+        bboxes = box_ops.box_convert(bboxes, "xyxy", "cxcywh")
 
         target["boxes"] = bboxes
         target["labels"] = bbox_labels

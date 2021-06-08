@@ -88,8 +88,8 @@ class VOCBaseDataset(DetectionDataset):
             self.label_info[cls_id] = cat
 
         # build inference for images
-        self.images = [os.path.join(image_folder, x + ".jpg") for x in self.file_names]
-        self.targets = [os.path.join(annotation_folder, x + ".xml") for x in self.file_names]
+        self.images = [os.path.join(image_folder, f"{x}.jpg") for x in self.file_names]
+        self.targets = [os.path.join(annotation_folder, f"{x}.xml") for x in self.file_names]
 
         self.dataset_mean = VOC_MEAN
         self.dataset_std = VOC_STD
