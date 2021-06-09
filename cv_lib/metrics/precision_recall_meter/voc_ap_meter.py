@@ -9,7 +9,7 @@ from torchvision.ops.boxes import box_iou
 
 import numpy as np
 
-from .meter import Meter
+from ..meter import Meter
 
 
 class VOCPrecisionRecallMeter(Meter):
