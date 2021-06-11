@@ -52,4 +52,4 @@ def nms(boxes: Tensor, scores: Tensor, overlap=0.5, top_k=200):
         iou = box_iou(selected_bbox.unsqueeze(0), boxes[idx])
         idx = idx[(iou < overlap).squeeze()]
 
-    return torch.tensor(keep, dtype=torch.int64, device=device)
+    return torch.as_tensor(keep, dtype=torch.int64, device=device)

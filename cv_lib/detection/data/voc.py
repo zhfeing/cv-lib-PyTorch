@@ -29,14 +29,14 @@ class VOCBaseDataset(DetectionDataset):
     )
 
     def __init__(
-            self,
-            root: str,
-            split: str = "trainval",
-            version: str = "2007",
-            resize: Optional[Tuple[int]] = (300, 300),
-            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
-            keep_difficult: bool = False,
-            make_partial: List[int] = None
+        self,
+        root: str,
+        split: str = "trainval",
+        version: str = "2007",
+        resize: Optional[Tuple[int]] = (300, 300),
+        augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+        keep_difficult: bool = False,
+        make_partial: List[int] = None
     ):
         """
         Args:
