@@ -1,7 +1,7 @@
 import os
 import argparse
 import random
-from typing import Any, Dict
+from typing import Any, Dict, List
 from collections import OrderedDict
 import json
 import pickle
@@ -26,7 +26,8 @@ __all__ = [
     "load_object",
     "customized_argsort",
     "customized_sort",
-    "tensor_dict_items"
+    "tensor_dict_items",
+    "tensor_to_list",
 ]
 
 
@@ -144,9 +145,13 @@ def customized_sort(tensor: torch.Tensor, dim=-1, descending=False, kind="quicks
     return torch.from_numpy(indices).type_as(tensor)
 
 
-def tensor_dict_items(tensor_dict: Dict[str, torch.Tensor]) -> Dict[str, float]:
+def tensor_dict_items(tensor_dict: Dict[str, torch.Tensor], ndigits: int = 4) -> Dict[str, float]:
     out_dict = dict()
     for k, v in tensor_dict.items():
-        out_dict[k] = v.item()
+        out_dict[k] = round(v.item(), ndigits)
     return out_dict
 
+
+def tensor_to_list(tensor: torch.Tensor, ndigits: int = 4) -> List[torch.Tensor]:
+    tensor_list = list(round(t, ndigits) for t in tensor.tolist())
+    return tensor_list
