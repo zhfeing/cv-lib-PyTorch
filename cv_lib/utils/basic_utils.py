@@ -1,7 +1,7 @@
 import os
 import argparse
 import random
-from typing import Any
+from typing import Any, Dict
 from collections import OrderedDict
 import json
 import pickle
@@ -24,6 +24,9 @@ __all__ = [
     "float_to_uint_image",
     "save_object",
     "load_object",
+    "customized_argsort",
+    "customized_sort",
+    "tensor_dict_items"
 ]
 
 
@@ -105,3 +108,45 @@ def load_object(fp: str) -> Any:
     fp = os.path.expanduser(fp)
     with open(fp, "rb") as f:
         return pickle.load(f)
+
+
+# will be replace by torch-1.9.0
+def customized_argsort(tensor: torch.Tensor, dim=-1, descending=False, kind="quicksort"):
+    """
+    Only support tensor on cpu and without grad
+    Args:
+        kind: {'quicksort', 'mergesort', 'heapsort', 'stable'}
+    """
+    assert tensor.device == torch.device("cpu"), "Only support cpu tensor"
+    assert tensor.requires_grad == False, "Only support tensor without grad"
+    tensor_np = tensor.numpy()
+    if descending:
+        indices = np.argsort(-tensor_np, axis=dim, kind=kind)
+    else:
+        indices = np.argsort(tensor_np, axis=dim, kind=kind)
+    return torch.from_numpy(indices).long()
+
+
+# will be replace by torch-1.9.0
+def customized_sort(tensor: torch.Tensor, dim=-1, descending=False, kind="quicksort"):
+    """
+    Only support tensor on cpu and without grad
+    Args:
+        kind: {'quicksort', 'mergesort', 'heapsort', 'stable'}
+    """
+    assert tensor.device == torch.device("cpu"), "Only support cpu tensor"
+    assert tensor.requires_grad == False, "Only support tensor without grad"
+    tensor_np = tensor.numpy()
+    if descending:
+        indices = np.sort(-tensor_np, axis=dim, kind=kind)
+    else:
+        indices = np.sort(tensor_np, axis=dim, kind=kind)
+    return torch.from_numpy(indices).type_as(tensor)
+
+
+def tensor_dict_items(tensor_dict: Dict[str, torch.Tensor]) -> Dict[str, float]:
+    out_dict = dict()
+    for k, v in tensor_dict.items():
+        out_dict[k] = v.item()
+    return out_dict
+

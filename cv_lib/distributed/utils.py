@@ -13,6 +13,7 @@ __all__ = [
     "all_gather",
     "all_gather_tensor",
     "all_gather_object",
+    "all_gather_list",
     "reduce_tensor",
     "reduce_dict",
     "cal_split_args",
@@ -84,6 +85,18 @@ def all_gather_object(data: Any) -> List[Any]:
     return data_list
 
 
+def all_gather_list(items: List[Any]) -> List[Any]:
+    if get_world_size() == 1:
+        return items
+
+    item_list = [None] * get_world_size()
+    dist.all_gather_object(item_list, items)
+    ret = list()
+    for items in item_list:
+        ret.extend(items)
+    return ret
+
+
 def all_gather_tensor(data: Tensor, device: torch.device) -> List[Tensor]:
     """
     Run all_gather on Tensor
@@ -111,10 +124,12 @@ def reduce_tensor(tensor: torch.Tensor, average=True) -> Tensor:
     if world_size < 2:
         return tensor
     with torch.no_grad():
+        device = tensor.device
+        tensor = tensor.to(torch.device("cuda:{}".format(get_rank())))
         dist.all_reduce(tensor)
         if average:
             tensor /= world_size
-        return tensor
+        return tensor.to(device)
 
 
 def reduce_dict(input_dict: Dict[str, Tensor], average=True) -> Dict[str, Tensor]:

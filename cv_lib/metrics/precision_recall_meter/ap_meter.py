@@ -11,8 +11,8 @@ from torchvision.ops.boxes import box_iou
 
 from cv_lib.metrics.meter import Meter
 from cv_lib.utils.cuda_utils import list_to_device
-
-import light_detr.utils.misc as misc
+from cv_lib.utils.basic_utils import customized_argsort
+import cv_lib.distributed.utils as dist_utils
 
 
 class APMeter_Base(Meter):
@@ -51,9 +51,6 @@ class APMeter_Base(Meter):
         self.label_ids = torch.arange(1, num_classes)
         self.img_ids: List[int] = list()
         self.eval_results: List[np.ndarray] = list()
-        self.cpu = torch.device("cpu")
-        self.recall = None
-        self.precision = None
         self.accumulate_info: Dict[str, Any] = None
 
     def reset(self):
@@ -84,7 +81,7 @@ class APMeter_Base(Meter):
             gt_hards=gt_hards
         )
         # move to cpu first
-        kwargs = {k: list_to_device(v, self.cpu) for k, v in kwargs.items()}
+        kwargs = {k: list_to_device(v, "cpu") for k, v in kwargs.items()}
         # get predictions and ground truths
         prs, gts = self._prepare(kwargs)
         # calculate iou between pr and gt
@@ -302,8 +299,6 @@ class APMeter_Base(Meter):
 
         pr_scores = [p["score"].item() for p in pr]
         res = dict(
-            # pr_ids=torch.as_tensor([p["id"] for p in pr], dtype=torch.int),
-            # gt_ids=torch.as_tensor([g["id"] for g in gt], dtype=torch.int),
             pr_scores=torch.as_tensor(pr_scores, dtype=torch.float),
             gt_ignore=gt_ignore,
             pr_ignore=pr_ignore,
@@ -313,7 +308,7 @@ class APMeter_Base(Meter):
         return res
 
     def sync(self):
-        pass
+        self.eval_results = dist_utils.all_gather_list(self.eval_results)
 
     def accumulate(self):
         # accumulate eval results
@@ -339,7 +334,7 @@ class APMeter_Base(Meter):
             gt_ignores = torch.cat([res["gt_ignore"] for res in res_by_label])
             pr_ignores = torch.cat([res["pr_ignore"] for res in res_by_label], dim=1)
             # sort by score
-            score_idx = misc.customized_argsort(cat_scores, descending=True, kind="mergesort")
+            score_idx = customized_argsort(cat_scores, descending=True, kind="mergesort")
             cat_scores = cat_scores[score_idx]
             pr_match = pr_match[:, score_idx]
             pr_ignores = pr_ignores[:, score_idx]
@@ -395,21 +390,27 @@ class APMeter_Base(Meter):
 
     def value(self):
         """Get the value of the meter in the current state."""
-        assert self.accumulate_info is not None, ""
-        precision = self.accumulate_info["precision"]
-        AP50 = precision[0].mean()
-        AP75 = precision[5].mean()
-        AP = precision.mean()
-        print("AP AP50 AP75", AP, AP50, AP75)
-        exit()
-        # self.accumulate_info = dict(
-        #     recall=recall,
-        #     precision=precision,
-        #     scores=scores,
-        #     n_iou=n_iou,
-        #     n_rec=n_rec,
-        #     n_label=n_label,
-        # )
+        assert self.accumulate_info is not None, "Must be accumulated first"
+        precision: Tensor = self.accumulate_info["precision"]
+        recall: Tensor = self.accumulate_info["recall"]
+
+        average_precision = precision.mean(dim=1)
+        ap_50 = average_precision[0]
+        ap_75 = average_precision[5]
+        ap = average_precision.mean(dim=0)
+        ret: Dict[str, Tensor] = dict(
+            recall=recall,
+            precision=precision,
+            average_precision=average_precision,
+            ap_50=ap_50,
+            ap_75=ap_75,
+            ap=ap,
+            mean_ap_50=ap_50.mean(),
+            mean_ap_75=ap_75.mean(),
+            mean_ap=ap.mean(),
+            mean_recall=recall.mean(),
+        )
+        return ret
 
 
 def expand_img_id(img_ids: List[LongTensor], batch_sizes: List[int]):
