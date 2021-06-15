@@ -5,6 +5,7 @@ from typing import Callable, DefaultDict, Tuple, List, Dict, Any
 
 import tqdm
 from PIL.Image import Image
+import numpy as np
 
 import torch
 from torch import FloatTensor, LongTensor
@@ -32,7 +33,8 @@ class CocoDetection(DetectionDataset):
             augmentations: Callable[[Image, FloatTensor, LongTensor], Tuple[Image, FloatTensor, LongTensor]] = None,
             keep_crowd: bool = False,
             make_partial: List[int] = None,
-            fast_record_fp: str = None
+            fast_record_fp: str = None,
+            keep_percent: float = None
     ):
         super().__init__(resize, augmentations)
 
@@ -55,6 +57,22 @@ class CocoDetection(DetectionDataset):
         self.logger.info("Parsing COCO %s dataset...", split)
         self._init_dataset(annotation_fp, make_partial, fast_record_fp)
         self.logger.info("Parsing COCO %s dataset done", split)
+
+        if keep_percent is not None:
+            self.logger.info("Reduce COCO {} dataset to %{:.2f}".format(split, keep_percent))
+            self._keep_percent(keep_percent)
+
+    def _keep_percent(self, keep_percent: float):
+        n_total = len(self.image_ids)
+        n_keep = int(n_total * keep_percent / 100)
+        if n_keep == 0:
+            raise "keep_percent ({}) is too small".format(keep_percent)
+        self.logger.info("COCO %s dataset keep %d instances", self.split, n_keep)
+        rng = np.random.default_rng(12345)
+        perm = rng.permutation(n_total)[:n_keep]
+        perm.sort()
+        self.image_ids = np.asarray(self.image_ids)[perm].tolist()
+        self.images = np.asarray(self.images)[perm].tolist()
 
     def _check_record(self, record: Dict[str, Any]) -> bool:
         p1 = record["make_partial"] == self.make_partial
