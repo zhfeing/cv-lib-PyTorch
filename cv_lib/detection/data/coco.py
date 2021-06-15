@@ -103,7 +103,7 @@ class CocoDetection(DetectionDataset):
         if make_partial is not None:
             make_partial.sort()
             self.CLASSES = tuple(self.CLASSES[c] for c in make_partial)
-            self.class_id = tuple(self.class_id[c] for c in make_partial)
+            self.cat_id = tuple(self.cat_id[c] for c in make_partial)
             self.logger.info("Partial COCO%s %s dataset with classes: %s", self.version, self.split, str(self.CLASSES))
 
         # skip 0 for background
