@@ -405,10 +405,10 @@ class APMeter_Base(Meter):
             ap_50=ap_50,
             ap_75=ap_75,
             ap=ap,
-            mean_ap_50=ap_50.mean(),
-            mean_ap_75=ap_75.mean(),
-            mean_ap=ap.mean(),
-            mean_recall=recall.mean(),
+            mean_ap_50=ap_50[~ap_50.isnan()].mean(),
+            mean_ap_75=ap_75[~ap_50.isnan()].mean(),
+            mean_ap=ap[~ap_50.isnan()].mean(),
+            mean_recall=recall[~recall.isnan()].mean(),
         )
         return ret
 
