@@ -9,6 +9,7 @@ from .voc import VOC0712Dataset, VOC2007Dataset
 
 __REGISTERED_DATASETS__ = {
     "COCO": CocoDetection,
+    "COCO_large": CocoDetection,
     "VOC2007": VOC2007Dataset,
     "VOC2012": VOC0712Dataset
 }
