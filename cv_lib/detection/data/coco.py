@@ -194,3 +194,13 @@ class CocoDetection(DetectionDataset):
             "iscrowd": iscrowd
         }
         return target
+
+    def set_samples(self, keep_ids: List[str]):
+        keep_ids = list(int(i) for i in keep_ids)
+        samples: List[int] = list()
+        keep_ids = set(keep_ids)
+        for idx, img_id in enumerate(self.image_ids):
+            if img_id in keep_ids:
+                samples.append(idx)
+        samples.sort()
+        self.samples = samples

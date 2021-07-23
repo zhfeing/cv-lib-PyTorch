@@ -39,11 +39,16 @@ class DetectionDataset(Dataset):
         self.dataset_mean: List[float] = None
         self.dataset_std: List[float] = None
 
+        # only for picking samples from the whole dataset
+        self.samples: List[int] = None
+
     @property
     def n_classes(self) -> int:
         return len(self.label_info)
 
     def __len__(self) -> int:
+        if self.samples is not None:
+            return len(self.samples)
         return len(self.images)
 
     def get_annotation(self, index: int) -> Dict[str, Any]:
@@ -51,6 +56,9 @@ class DetectionDataset(Dataset):
 
     def get_img_id(self, index: int) -> Union[str, int]:
         return index
+
+    def set_samples(self, keep_ids: List[Union[str, int]]):
+        pass
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Dict[str, Any]]:
         """
@@ -67,6 +75,8 @@ class DetectionDataset(Dataset):
 
         Warning: after transformation, the number of bounding box of one image could be ZERO
         """
+        if self.samples is not None:
+            index = self.samples[index]
         img = pil_loader(self.images[index])
         img_w, img_h = img.size
 

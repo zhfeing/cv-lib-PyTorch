@@ -137,6 +137,15 @@ class VOCBaseDataset(DetectionDataset):
         }
         return target
 
+    def set_samples(self, keep_ids: List[str]):
+        samples: List[int] = list()
+        keep_ids = set(keep_ids)
+        for idx, img_id in enumerate(self.file_names):
+            if img_id in keep_ids:
+                samples.append(idx)
+        samples.sort()
+        self.samples = samples
+
 
 class VOC2007Dataset(VOCBaseDataset):
     def __init__(self, **kwargs):
