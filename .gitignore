@@ -112,6 +112,7 @@ venv.bak/
 
 
 .vscode/
+.DS_Store
 save/
 run/
 run_*.sh
