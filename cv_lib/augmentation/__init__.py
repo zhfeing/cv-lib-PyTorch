@@ -12,6 +12,7 @@ __REGISTERED_AUGS__ = {
     "ColorJitter": ColorJitter,
     "RandomPadBottomRight": RandomPadBottomRight,
     "RandomResize": RandomResize,
+    "RandomErasing": RandomErasing,
 }
 
 
