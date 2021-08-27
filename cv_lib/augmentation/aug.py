@@ -8,10 +8,11 @@ import abc
 
 from PIL.Image import Image
 
+import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
-from .functional import crop, pad_bottom_right, resize
+from .functional import crop, pad_bottom_right, resize, rotate
 
 
 __all__ = [
@@ -28,7 +29,8 @@ __all__ = [
     "RandomSelect",
     "RandomErasing",
     "ToTensor",
-    "Normalize"
+    "Normalize",
+    "RandomRotation"
 ]
 
 
@@ -227,6 +229,30 @@ class RandomErasing(BaseTransform):
         target: Dict[str, Any]
     ) -> Tuple[Image, Dict[str, Any]]:
         return self.eraser(img), target
+
+
+class RandomRotation(BaseTransform):
+    def __init__(
+        self,
+        degrees: List[float],
+        expand=False,
+        center=None,
+        fill=0
+    ):
+        self.degrees = degrees
+        self.expand = expand
+        self.center = center
+        self.fill = fill
+
+    def __call__(self, img: Image, target: Dict[str, Any]) -> Tuple[Image, Dict[str, Any]]:
+        degree = T.RandomRotation.get_params(self.degrees)
+        fill = self.fill
+        if isinstance(img, torch.Tensor):
+            if isinstance(fill, (int, float)):
+                fill = [float(fill)] * TF._get_image_num_channels(img)
+            else:
+                fill = [float(f) for f in fill]
+        return rotate(img, target, degree, self.expand, self.center, fill)
 
 
 class ToTensor(BaseTransform):

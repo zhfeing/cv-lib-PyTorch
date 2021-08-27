@@ -13,6 +13,7 @@ __REGISTERED_AUGS__ = {
     "RandomPadBottomRight": RandomPadBottomRight,
     "RandomResize": RandomResize,
     "RandomErasing": RandomErasing,
+    "RandomRotation": RandomRotation
 }
 
 

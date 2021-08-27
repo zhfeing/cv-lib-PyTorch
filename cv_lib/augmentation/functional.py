@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Tuple, Dict, Any, Union
+from typing import List, Tuple, Dict, Any, Union, Optional
 
 from PIL.Image import Image
 
@@ -14,6 +14,7 @@ __all__ = [
     "crop",
     "resize",
     "pad_bottom_right",
+    "rotate"
 ]
 
 
@@ -135,6 +136,38 @@ def pad_bottom_right(
         target["boxes"] = box_op.box_convert(bboxes, "xyxy", "cxcywh")
     if "masks" in target:
         target['masks'] = TF.pad(target['masks'], (0, 0, padding[0], padding[1]))
+
+    return img, target
+
+
+def rotate(
+    img: Image,
+    target: Dict[str, Any],
+    angle: float,
+    expand: bool = False,
+    center: Optional[List[int]] = None,
+    fill: Optional[List[float]] = None
+) -> Tuple[Image, Dict[str, Any]]:
+    img = TF.rotate(
+        img,
+        angle=angle,
+        interpolation=TF.InterpolationMode.NEAREST,
+        expand=expand,
+        center=center,
+        fill=fill
+    )
+
+    if "boxes" in target:
+        raise NotImplementedError
+    if "masks" in target:
+        target["masks"] = TF.rotate(
+            target["masks"],
+            angle=angle,
+            interpolation=TF.InterpolationMode.NEAREST,
+            expand=expand,
+            center=center,
+            fill=fill
+        )
 
     return img, target
 
