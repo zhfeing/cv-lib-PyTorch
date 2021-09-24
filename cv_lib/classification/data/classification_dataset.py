@@ -5,7 +5,6 @@ from PIL.Image import Image
 
 from torch import Tensor
 from torch.utils.data import Dataset
-from torchvision.datasets.folder import pil_loader
 import torchvision.transforms.functional as TF
 
 
@@ -46,7 +45,7 @@ class ClassificationDataset(Dataset):
     def get_annotation(self, index: int) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def get_img_id(index: int) -> Union[int, str]:
+    def get_img_id(self, index: int) -> Union[int, str]:
         return index
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Dict[str, Any]]:

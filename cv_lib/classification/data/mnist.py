@@ -10,7 +10,7 @@ from .classification_dataset import ClassificationDataset
 from cv_lib.utils import log_utils
 
 
-MNIST_MEAN = [0.5]
+MNIST_MEAN = [0.0]
 MNIST_STD = [1.0]
 
 
@@ -23,7 +23,7 @@ class MNIST(ClassificationDataset):
     def __init__(
         self,
         root: str,
-        split: str = "trainval",
+        split: str = "train",
         resize: Optional[Tuple[int]] = None,
         augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None,
     ):
@@ -44,12 +44,13 @@ class MNIST(ClassificationDataset):
             train=self.split == "train",
             download=True
         )
+        self._init_dataset()
 
     def _init_dataset(self):
         for i, cls_name in enumerate(self.CLASSES):
             self.label_info[i] = cls_name
             self.label_map[cls_name] = i
-
+        self.data = self.mnist_dataset.data.numpy()
         self.dataset_mean = MNIST_MEAN
         self.dataset_std = MNIST_STD
 
@@ -57,7 +58,7 @@ class MNIST(ClassificationDataset):
         return len(self.mnist_dataset)
 
     def get_image(self, index: int) -> Image:
-        img = self.mnist_dataset.data[index]
+        img = self.data[index]
         return Image.fromarray(img, mode="L")
 
     def get_annotation(self, index: int) -> Dict[str, Any]:

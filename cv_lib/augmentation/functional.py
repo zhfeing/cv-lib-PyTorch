@@ -35,7 +35,7 @@ def crop(
     top, left, h, w = region
 
     # set new image size
-    if "size" in target.keys():
+    if "size" in target:
         target["size"] = (h, w)
 
     fields: List[str] = list()
@@ -108,8 +108,8 @@ def resize(
     size = get_size(img.size, size, max_size)
     img = TF.resize(img, size)
 
-    target = target.copy()
-    target["size"] = tuple(size)
+    if "size" in target:
+        target["size"] = tuple(size)
 
     if "masks" in target:
         target['masks'] = F.interpolate(target['masks'][:, None].float(), size, mode="nearest")[:, 0] > 0.5
@@ -125,8 +125,9 @@ def pad_bottom_right(
     # assumes that we only pad on the bottom right corners
     w, h = img.size
     img = TF.pad(img, (0, 0, padding[0], padding[1]))
-    target = deepcopy(target)
-    target["size"] = (img.size[1], img.size[0])
+
+    if "size" in target:
+        target["size"] = (img.size[1], img.size[0])
 
     if "boxes" in target:
         bboxes = box_op.box_convert(target["boxes"], "cxcywh", "xyxy")
@@ -136,6 +137,27 @@ def pad_bottom_right(
         target["boxes"] = box_op.box_convert(bboxes, "xyxy", "cxcywh")
     if "masks" in target:
         target['masks'] = TF.pad(target['masks'], (0, 0, padding[0], padding[1]))
+
+    return img, target
+
+
+def pad(
+    img: Image,
+    target: Dict[str, Any],
+    padding: List[int],
+    fill: int = 0,
+    mask_fill: int = 0,
+    padding_mode: str = "constant"
+) -> Tensor:
+    img = TF.pad(img, padding, fill, padding_mode)
+
+    if "size" in target:
+        target["size"] = (img.size[1], img.size[0])
+
+    if "boxes" in target:
+        raise NotImplementedError
+    if "masks" in target:
+        target['masks'] = TF.pad(target['masks'], padding, mask_fill, padding_mode)
 
     return img, target
 

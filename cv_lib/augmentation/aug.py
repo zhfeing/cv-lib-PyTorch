@@ -12,7 +12,7 @@ import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
-from .functional import crop, pad_bottom_right, resize, rotate
+from .functional import crop, pad_bottom_right, resize, rotate, pad
 
 
 __all__ = [
@@ -122,14 +122,27 @@ class UnNormalize:
 
 
 class RandomCrop(BaseTransform):
-    def __init__(self, size: Tuple[int, int]):
+    def __init__(
+        self,
+        size: Tuple[int, int],
+        padding: List[int] = None,
+        fill: int = 0,
+        mask_fill: int = 0,
+        padding_mode: str = "constant"
+    ):
         self.size = size
+        self.padding = padding
+        self.fill = fill
+        self.mask_fill = mask_fill
+        self.padding_mode = padding_mode
 
     def __call__(
         self,
         img: Image,
         target: Dict[str, Any]
     ) -> Tuple[Image, Dict[str, Any]]:
+        if self.padding is not None:
+            img, target = pad(img, target, self.padding, self.fill, self.mask_fill, self.padding_mode)
         region = T.RandomCrop.get_params(img, self.size)
         return crop(img, target, region)
 

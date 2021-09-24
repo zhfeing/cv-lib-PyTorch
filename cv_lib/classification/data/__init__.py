@@ -4,12 +4,14 @@ from typing import Dict, Any, Callable, Tuple
 from torch.utils.data import Dataset
 
 from .classification_dataset import ClassificationDataset
-from .dataloader import get_dataloader
 from .mnist import MNIST
+from .cifar import CIFAR_10, CIFAR_100
 
 
 __REGISTERED_DATASETS__ = {
     "mnist": MNIST,
+    "cifar_10": CIFAR_10,
+    "cifar_100": CIFAR_100
 }
 
 
