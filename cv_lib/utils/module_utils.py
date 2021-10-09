@@ -56,9 +56,8 @@ class MidExtractor:
                 self.hooks[name] = handle
 
     def _remove_hooks(self):
-        for name, hook in self.hooks.items():
+        for hook in self.hooks.values():
             hook.remove()
-            self.logger.info("Removed hook: %s", name)
 
 
 class Identity(nn.Module):
