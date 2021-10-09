@@ -2,7 +2,7 @@ import os
 import argparse
 
 
-def rm_ckpts(ckpt_dir: str, test: bool):
+def rm_ckpts(ckpt_dir: str, test: bool, perserve_first: bool):
     for dirpath, _, filenames in os.walk(ckpt_dir):
         if "best.pth" in filenames:
             print("\nIn dir:", dirpath)
@@ -12,6 +12,8 @@ def rm_ckpts(ckpt_dir: str, test: bool):
         iters = list(int(a.split("-")[1][:-4]) for a in filenames)
         iters.sort()
         iters.pop(-1)
+        if perserve_first:
+            iters.pop(0)
         for it in iters:
             fp = os.path.join(dirpath, "iter-{}.pth".format(it))
             if test:
@@ -24,6 +26,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--root")
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--preserve-first-ckpt", action="store_true")
     args = parser.parse_args()
 
     root = os.path.expanduser(args.root)
@@ -34,4 +37,4 @@ if __name__ == "__main__":
             ckpt_dirs.append(ckpt_dir)
 
     for dir in ckpt_dirs:
-        rm_ckpts(dir, args.test)
+        rm_ckpts(dir, args.test, args.preserve_first_ckpt)
