@@ -1,5 +1,6 @@
 import os
 import json
+import warnings
 from typing import Dict, Any, List, Tuple
 
 from torch.utils.data import Dataset
@@ -23,6 +24,7 @@ class TinyImagenet:
                 "val_9992.JPEG	n02231487	30	8	56	41"
     """
     def __init__(self, root: str, split: str, transform=None):
+        warnings.warn("TinyImagenet has been withdraw by the authors and shall never be used")
         self.root = os.path.expanduser(root)
         self.split = split
         self.transform = transform

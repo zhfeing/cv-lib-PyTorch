@@ -3,7 +3,7 @@ All bounding boxes are supposed as "cxcywh" format and normalized to [0, 1]
 """
 
 import random
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, Union
 import abc
 
 from PIL.Image import Image
@@ -25,6 +25,7 @@ __all__ = [
     "RandomSizeCrop",
     "CenterCrop",
     "RandomPadBottomRight",
+    "Resize",
     "RandomResize",
     "RandomSelect",
     "RandomErasing",
@@ -177,6 +178,18 @@ class CenterCrop(BaseTransform):
         crop_top = int(round((image_height - crop_height) / 2.))
         crop_left = int(round((image_width - crop_width) / 2.))
         return crop(img, target, (crop_top, crop_left, crop_height, crop_width))
+
+
+class Resize(BaseTransform):
+    def __init__(self, size: Union[int, Tuple[int, int]]):
+        self.size = size
+
+    def __call__(
+        self,
+        img: Image,
+        target: Dict[str, Any]
+    ) -> Tuple[Image, Dict[str, Any]]:
+        return resize(img, target, self.size)
 
 
 class RandomResize(BaseTransform):

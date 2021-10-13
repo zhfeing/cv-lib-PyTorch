@@ -1,4 +1,5 @@
-from typing import Dict
+from copy import deepcopy
+from typing import Dict, Any
 
 import torch
 from torch.nn import Module
@@ -11,7 +12,7 @@ from .vgg import *
 from .mobilenetv2 import *
 
 
-MODEL_DICT = {
+__MODEL_DICT__ = {
     # small resnet for cifar
     "resnet20_cs": resnet20_cs,
     "resnet32_cs": resnet32_cs,
@@ -42,10 +43,10 @@ MODEL_DICT = {
 }
 
 
-def get_model(model_name: str, num_classes: int, state_dict: Dict[str, torch.Tensor] = None, **kwargs):
-    model: Module = MODEL_DICT[model_name](num_classes=num_classes, **kwargs)
-
-    if state_dict is not None:
-        model.load_state_dict(state_dict)
+def get_model(model_cfg: Dict[str, Any], num_classes: int):
+    model_cfg = deepcopy(model_cfg)
+    model_cfg.pop("name")
+    name = model_cfg.pop("model_name")
+    model: Module = __MODEL_DICT__[name](num_classes=num_classes, **model_cfg)
     return model
 
