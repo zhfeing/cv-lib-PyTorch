@@ -6,7 +6,7 @@ from cv_lib.utils import log_utils
 
 __REGISTERED_AUGS__ = {
     "RandomCrop": RandomCrop,
-    "RandomSizeCrop": RandomSizeCrop,
+    "RandomSizeCrop": RandomResizedCrop,
     "CenterCrop": CenterCrop,
     "RandomHorizontalFlip": RandomHorizontalFlip,
     "ColorJitter": ColorJitter,

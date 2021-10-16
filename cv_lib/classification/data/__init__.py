@@ -6,12 +6,14 @@ from torch.utils.data import Dataset
 from .classification_dataset import ClassificationDataset
 from .mnist import MNIST
 from .cifar import CIFAR_10, CIFAR_100
+from .imagenet import ImageNet
 
 
 __REGISTERED_DATASETS__ = {
     "mnist": MNIST,
     "cifar_10": CIFAR_10,
-    "cifar_100": CIFAR_100
+    "cifar_100": CIFAR_100,
+    "imagenet": ImageNet,
 }
 
 
