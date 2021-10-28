@@ -1,6 +1,8 @@
-opencv-python
-torch>=1.7.0
-torchvision>=0.8.1
+torch>=1.8.1
+torchvision>=0.9.1
 tensorboard
 PyYAML
-cupy-cuda101
+# cupy-cuda111
+scipy
+tqdm
+
