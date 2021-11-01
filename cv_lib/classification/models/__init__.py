@@ -8,8 +8,7 @@ from .resnet import *
 from .cifar_large_resnet import *
 from .cifar_small_resnet import *
 from .wrn import *
-from .vgg import *
-from .mobilenetv2 import *
+from timm.models.efficientnet import efficientnet_b2
 
 
 __MODEL_DICT__ = {
@@ -33,13 +32,8 @@ __MODEL_DICT__ = {
     "wrn_16_2": wrn_16_2,
     "wrn_40_1": wrn_40_1,
     "wrn_40_2": wrn_40_2,
-    # vgg
-    "vgg11": vgg11_bn,
-    "vgg13": vgg13_bn,
-    "vgg16": vgg16_bn,
-    "vgg19": vgg19_bn,
-    # mobile net
-    "MobileNetV2": mobile_half,
+
+    "efficientnet_b2": efficientnet_b2
 }
 
 
