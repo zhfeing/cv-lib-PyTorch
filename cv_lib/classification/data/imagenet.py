@@ -1,17 +1,13 @@
 import os
-from typing import Callable, Tuple, Optional, Dict, Any
+from typing import Callable, Tuple, Optional, Dict, Any, List
 
 from PIL import Image
-import scipy.io as sio
 
 import torch
 from torchvision.datasets.utils import verify_str_arg
-from torchvision.datasets.folder import pil_loader, make_dataset, is_image_file
+from torchvision.datasets.folder import pil_loader, is_image_file
 
-from cv_lib.utils import log_utils
-from cv_lib.utils import load_object, save_object
-import cv_lib.distributed.utils as dist_utils
-
+from cv_lib.utils import log_utils, random_pick_instances
 
 from .classification_dataset import ClassificationDataset
 
@@ -39,7 +35,7 @@ class ImageNet(ClassificationDataset):
         split: str = "train",
         resize: Optional[Tuple[int]] = None,
         augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None,
-        fast_record_fp: str = None
+        make_partial: float = None
     ):
         """
         Args:
@@ -55,27 +51,11 @@ class ImageNet(ClassificationDataset):
         self.meta_folder = os.path.join(self.root, "devkit", "data")
 
         self.logger = log_utils.get_master_logger("Imagenet")
-        self._init_dataset(fast_record_fp)
+        self._init_dataset(make_partial)
 
-    def _init_dataset(self, fast_record_fp: str):
+    def _init_dataset(self, make_partial: float):
         self.dataset_mean = MEAN
         self.dataset_std = STD
-        if fast_record_fp is not None:
-            fast_record_fp = fast_record_fp.format(split=self.split)
-            try:
-                self.logger.info("Found fast record file")
-                record_dict: Dict[str, Any] = load_object(fast_record_fp)
-                if not record_dict["split"] == self.split:
-                    self.logger.warning("Record file `make_partial` incorrect, ignoring...")
-                else:
-                    self.CLASSES = record_dict["CLASSES"]
-                    self.label_map = record_dict["label_map"]
-                    self.label_info = record_dict["label_info"]
-                    self.instances = record_dict["instances"]
-                    return
-            except:
-                self.logger.warning("Load fast record file failed")
-
         self.logger.info("Reading annotation file...")
         # get classes and class map
         self.CLASSES = [d.name for d in os.scandir(self.data_folder) if d.is_dir()]
@@ -83,19 +63,11 @@ class ImageNet(ClassificationDataset):
         for i, cls_name in enumerate(self.CLASSES):
             self.label_info[i] = cls_name
             self.label_map[cls_name] = i
-        self.instances = make_dataset(self.data_folder, self.label_map, is_valid_file=is_image_file)
-
-        if fast_record_fp is not None:
-            record_dict = {
-                "CLASSES": self.CLASSES,
-                "label_map": self.label_map,
-                "label_info": self.label_info,
-                "instances": self.instances,
-                "split": self.split,
-            }
-            # save only as main process
-            if dist_utils.is_main_process():
-                save_object(record_dict, fast_record_fp)
+        instances_by_class = make_dataset(self.data_folder, self.label_map)
+        self.instances: List[Tuple[str, int]] = []
+        for i, instances in enumerate(instances_by_class):
+            instances = random_pick_instances(instances, make_partial, i)
+            self.instances.extend(instances)
 
     def __len__(self):
         return len(self.instances)
@@ -109,3 +81,35 @@ class ImageNet(ClassificationDataset):
         label = self.instances[index][1]
         annot = dict(label=torch.tensor(label))
         return annot
+
+
+def make_dataset(
+    directory: str,
+    class_to_idx: Dict[str, int],
+) -> List[List[Tuple[str, int]]]:
+    """
+    Generates a list of samples of a form (path_to_sample, class).
+    Args:
+        directory (str): root dataset directory
+        class_to_idx (Dict[str, int]): dictionary mapping class name to class index
+    Returns:
+        List[List[Tuple[str, int]]]: samples of a form (path_to_sample, class) by class_id
+    """
+    instances_by_class: List[List[Tuple[str, int]]] = []
+    directory = os.path.expanduser(directory)
+
+    for target_class in sorted(class_to_idx.keys()):
+        instances: List[Tuple[str, int]] = []
+        class_index = class_to_idx[target_class]
+        target_dir = os.path.join(directory, target_class)
+        if not os.path.isdir(target_dir):
+            raise Exception("Class {} has no image files".format(target_class))
+        for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
+            for fname in sorted(fnames):
+                path = os.path.join(root, fname)
+                if is_image_file(path):
+                    item = path, class_index
+                    instances.append(item)
+            instances_by_class.append(instances)
+    return instances_by_class
+

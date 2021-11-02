@@ -28,6 +28,7 @@ __all__ = [
     "customized_sort",
     "tensor_dict_items",
     "tensor_to_list",
+    "random_pick_instances",
 ]
 
 
@@ -155,3 +156,15 @@ def tensor_dict_items(tensor_dict: Dict[str, torch.Tensor], ndigits: int = 4) ->
 def tensor_to_list(tensor: torch.Tensor, ndigits: int = 4) -> List[torch.Tensor]:
     tensor_list = list(round(t, ndigits) for t in tensor.tolist())
     return tensor_list
+
+
+def random_pick_instances(instances: List[Any], make_partial: float, seed: int):
+    if make_partial is None:
+        return instances
+    assert 0 < make_partial < 1
+    n_pick = round(len(instances) * make_partial)
+    rng = np.random.default_rng(seed=seed)
+    rng.shuffle(instances)
+    instances = instances[:n_pick]
+    return instances
+
