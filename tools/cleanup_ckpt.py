@@ -13,6 +13,8 @@ def rm_ckpts(ckpt_dir: str, test: bool, perserve_first: bool):
         iters.sort()
         iters.pop(-1)
         if perserve_first:
+            if len(iters) < 1:
+                return
             iters.pop(0)
         for it in iters:
             fp = os.path.join(dirpath, "iter-{}.pth".format(it))
