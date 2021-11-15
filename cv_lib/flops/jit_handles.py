@@ -238,6 +238,33 @@ def einsum_flop_jit(
         flop_counter = Counter({"einsum": flop})
         return flop_counter
 
+    elif equation == "ab,cbd->cda":
+        a, b = input_shapes[0]
+        c, _, d = input_shapes[1]
+        flop = a * b * c * d
+        flop_counter = Counter({"einsum": flop})
+        return flop_counter
+
+    elif equation == "abc,dbc->abd":
+        a, b, c = input_shapes[0]
+        d = input_shapes[1][0]
+        flop = a * b * c * d
+        flop_counter = Counter({"einsum": flop})
+        return flop_counter
+
+    elif equation == "abc,dbc->bad":
+        a, b, c = input_shapes[0]
+        d = input_shapes[1][0]
+        flop = a * b * c * d
+        flop_counter = Counter({"einsum": flop})
+        return flop_counter
+
+    elif equation == "abc,cad->bad":
+        a, b, c = input_shapes[0]
+        d = input_shapes[1][-1]
+        flop = a * b * c * d
+        flop_counter = Counter({"einsum": flop})
+        return flop_counter
     else:
         raise NotImplementedError("Unsupported einsum operation.")
 
