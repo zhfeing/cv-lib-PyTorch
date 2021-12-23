@@ -1,14 +1,12 @@
 import collections
 from typing import List, OrderedDict, Any
 
-from torch import nn, Tensor
+import torch
+import torch.nn as nn
 from torch.utils.hooks import RemovableHandle
 
 
-__all__ = [
-    "MidExtractor",
-    "Identity"
-]
+__all__ = ["MidExtractor"]
 
 
 class MidExtractor:
@@ -17,11 +15,19 @@ class MidExtractor:
         model: nn.Module,
         extract_names: List[str],
         require_output: bool = True,
-        register_now: bool = True
+        register_now: bool = True,
+        retain_grad_names: List[str] = list()
     ):
+        """
+        Args:
+            extract_names: the output of mid layers will be extracted
+            require_ourput: `if True`: extract output of the layer; `else`: extract input of the layer
+            retain_grad_names: extracted tensors will be set to retain_grad during backward propagation
+        """
         self.model = model
         self.extract_names = extract_names
         self.require_output = require_output
+        self.retain_grad_names = retain_grad_names
 
         self.features: OrderedDict[str, Any] = collections.OrderedDict()
         self.hooks: OrderedDict[str, RemovableHandle] = collections.OrderedDict()
@@ -49,7 +55,10 @@ class MidExtractor:
 
                 def forward_hook(module: nn.Module, input, output):
                     name = getattr(module, "name")
-                    feat = output if self.require_output else input
+                    feat: torch.Tensor = output if self.require_output else input
+                    if name in self.retain_grad_names and feat.requires_grad:
+                        assert isinstance(feat, torch.Tensor)
+                        feat.retain_grad()
                     self.features[name] = feat
 
                 handle = module.register_forward_hook(forward_hook)
@@ -59,10 +68,3 @@ class MidExtractor:
         for hook in self.hooks.values():
             hook.remove()
 
-
-class Identity(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x: Tensor):
-        return x
