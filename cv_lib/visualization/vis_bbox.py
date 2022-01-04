@@ -9,7 +9,7 @@ from torch import Tensor, LongTensor
 import torchvision.transforms.functional as TF
 import torchvision.ops.boxes as box_ops
 
-from cv_lib.detection.data.augmentation import UnNormalize
+from cv_lib.augmentation import UnNormalize
 
 
 def draw_bbox(
