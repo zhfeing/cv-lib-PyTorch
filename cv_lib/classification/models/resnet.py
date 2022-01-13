@@ -1,7 +1,12 @@
+"""
+ResNet for ImageNet, almost identity to torchvision.models.ResNet.
+Some `inplace` relu layers are set to non-inplace for feature extraction.
+"""
+
+from typing import Callable, List, Type, Union
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 from torchvision.models.resnet import conv1x1, conv3x3
 
 
@@ -23,11 +28,18 @@ __all__ = [
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
-                 base_width=64, dilation=1, norm_layer=None):
-        super(BasicBlock, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: nn.Module = nn.Identity(),
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        super().__init__()
         if groups != 1 or base_width != 64:
             raise ValueError("BasicBlock only supports groups=1 and base_width=64")
         if dilation > 1:
@@ -35,27 +47,24 @@ class BasicBlock(nn.Module):
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = norm_layer(planes)
+        self.relu = nn.ReLU(inplace=False)
         self.downsample = downsample
         self.stride = stride
 
-    def forward(self, x):
-        identity = x
-
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
 
-        if self.downsample is not None:
-            identity = self.downsample(x)
-
+        identity = self.downsample(x)
         out += identity
-        out = F.relu(out, inplace=False)
+        out = self.relu(out)
 
         return out
 
@@ -69,42 +78,47 @@ class Bottleneck(nn.Module):
 
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
-                 base_width=64, dilation=1, norm_layer=None):
-        super(Bottleneck, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: nn.Module = nn.Identity(),
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        super().__init__()
         width = int(planes * (base_width / 64.)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv1x1(inplanes, width)
         self.bn1 = norm_layer(width)
+        self.relu1 = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(width, width, stride, groups, dilation)
         self.bn2 = norm_layer(width)
+        self.relu2 = nn.ReLU(inplace=True)
         self.conv3 = conv1x1(width, planes * self.expansion)
         self.bn3 = norm_layer(planes * self.expansion)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU(inplace=False)
         self.downsample = downsample
         self.stride = stride
 
-    def forward(self, x):
-        identity = x
-
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = self.relu2(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
 
-        if self.downsample is not None:
-            identity = self.downsample(x)
-
+        identity = self.downsample(x)
         out += identity
-        out = F.relu(out, inplace=False)
+        out = self.relu(out)
 
         return out
 
@@ -113,12 +127,19 @@ class ResNet(nn.Module):
     """
     ResNet for large scale dataset, same as PyTorch official with some relu is non-inplace
     """
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None):
-        super(ResNet, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
+    def __init__(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        layers: List[int],
+        num_classes: int = 1000,
+        in_channels: int = 3,
+        zero_init_residual: bool = False,
+        groups: int = 1,
+        width_per_group: int = 64,
+        replace_stride_with_dilation=None,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        super().__init__()
         self._norm_layer = norm_layer
 
         self.inplanes = 64
@@ -132,20 +153,20 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(in_channels, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
-                                       dilate=replace_stride_with_dilation[0])
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
-                                       dilate=replace_stride_with_dilation[1])
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0])
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1])
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        self._init_parameters(zero_init_residual)
+
+    def _init_parameters(self, zero_init_residual: bool):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
@@ -163,9 +184,16 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+    def _make_layer(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        planes: int,
+        blocks: int,
+        stride: int = 1,
+        dilate: bool = False
+    ):
         norm_layer = self._norm_layer
-        downsample = None
+        downsample = nn.Identity()
         previous_dilation = self.dilation
         if dilate:
             self.dilation *= stride
@@ -176,19 +204,22 @@ class ResNet(nn.Module):
                 norm_layer(planes * block.expansion),
             )
 
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer))
+        layers: List[Union[BasicBlock, Bottleneck]] = []
+        layers.append(block(
+            inplanes=self.inplanes, planes=planes, stride=stride,
+            downsample=downsample, groups=self.groups, base_width=self.base_width,
+            dilation=previous_dilation, norm_layer=norm_layer
+        ))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes, groups=self.groups,
-                                base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer))
+            layers.append(block(
+                inplanes=self.inplanes, planes=planes, groups=self.groups, base_width=self.base_width,
+                dilation=self.dilation, norm_layer=norm_layer
+            ))
 
         return nn.Sequential(*layers)
 
-    def _forward_impl(self, x):
-        # See note [TorchScript super()]
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -204,9 +235,6 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         return x
-
-    def forward(self, x):
-        return self._forward_impl(x)
 
 
 def resnet10(**kwargs):

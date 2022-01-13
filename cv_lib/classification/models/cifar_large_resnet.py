@@ -1,5 +1,16 @@
+"""
+Large resnet models for cifar datasets, same as crd repo-dist
+"""
+
+from typing import Callable, List, Union, Type
+
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torchvision.models.resnet import conv1x1
+
+from cv_lib.detection.models.aux_layers import conv3x3
+
+from .resnet import BasicBlock, Bottleneck
 
 
 __all__ = [
@@ -12,67 +23,48 @@ __all__ = [
 ]
 
 
-class BasicBlock(nn.Module):
-    expansion = 1
-
-    def __init__(self, in_planes, planes, stride=1, is_last=False):
-        super(BasicBlock, self).__init__()
-        self.is_last = is_last
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+class BasicBlock_CL(BasicBlock):
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        if stride != 1 or inplanes != self.expansion * planes:
+            downsample = nn.Sequential(
+                conv1x1(inplanes, self.expansion * planes, stride),
                 nn.BatchNorm2d(self.expansion * planes)
             )
-
-    def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
-        preact = out
-        out = F.relu(out)
-        if self.is_last:
-            return out, preact
-        else:
-            return out
+        super().__init__(
+            inplanes=inplanes,
+            planes=planes,
+            stride=stride,
+            downsample=downsample,
+            norm_layer=norm_layer
+        )
 
 
-class Bottleneck(nn.Module):
-    expansion = 4
-
-    def __init__(self, in_planes, planes, stride=1, is_last=False):
-        super(Bottleneck, self).__init__()
-        self.is_last = is_last
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
-
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+class Bottleneck_CL(Bottleneck):
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        if stride != 1 or inplanes != self.expansion * planes:
+            downsample = nn.Sequential(
+                conv1x1(inplanes, self.expansion * planes, stride),
                 nn.BatchNorm2d(self.expansion * planes)
             )
-
-    def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = self.bn3(self.conv3(out))
-        out += self.shortcut(x)
-        preact = out
-        out = F.relu(out)
-        if self.is_last:
-            return out, preact
-        else:
-            return out
+        super().__init__(
+            inplanes=inplanes,
+            planes=planes,
+            stride=stride,
+            downsample=downsample,
+            norm_layer=norm_layer
+        )
 
 
 class ResNet_CL(nn.Module):
@@ -83,19 +75,32 @@ class ResNet_CL(nn.Module):
         1. First conv layer has kernel size of 3 (7) and stride 1 (2)
         2. Using non-inplace relu for feature extracting
     """
-    def __init__(self, block, num_blocks, num_classes=10, zero_init_residual=False):
-        super(ResNet_CL, self).__init__()
-        self.in_planes = 64
+    def __init__(
+        self,
+        block: Type[Union[BasicBlock_CL, Bottleneck_CL]],
+        num_blocks: List[int],
+        num_classes=10,
+        in_channels: int = 3,
+        zero_init_residual: bool = False,
+        norm_layer: Callable[[int], nn.Module] = nn.BatchNorm2d,
+    ):
+        super().__init__()
+        self.inplanes = 64
+        self._norm_layer = norm_layer
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.conv1 = conv3x3(in_channels, self.inplanes)
+        self.bn1 = norm_layer(self.inplanes)
+        self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear = nn.Linear(512 * block.expansion, num_classes)
+        self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        self._init_parameters(zero_init_residual)
+
+    def _init_parameters(self, zero_init_residual: bool):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
@@ -113,63 +118,39 @@ class ResNet_CL(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def get_feat_modules(self):
-        feat_m = nn.ModuleList([])
-        feat_m.append(self.conv1)
-        feat_m.append(self.bn1)
-        feat_m.append(self.layer1)
-        feat_m.append(self.layer2)
-        feat_m.append(self.layer3)
-        feat_m.append(self.layer4)
-        return feat_m
-
-    def get_bn_before_relu(self):
-        if isinstance(self.layer1[0], Bottleneck):
-            bn1 = self.layer1[-1].bn3
-            bn2 = self.layer2[-1].bn3
-            bn3 = self.layer3[-1].bn3
-            bn4 = self.layer4[-1].bn3
-        elif isinstance(self.layer1[0], BasicBlock):
-            bn1 = self.layer1[-1].bn2
-            bn2 = self.layer2[-1].bn2
-            bn3 = self.layer3[-1].bn2
-            bn4 = self.layer4[-1].bn2
-        else:
-            raise NotImplementedError("ResNet unknown block error !!!")
-
-        return [bn1, bn2, bn3, bn4]
-
-    def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks - 1)
+    def _make_layer(
+        self,
+        block: Type[Union[BasicBlock_CL, Bottleneck_CL]],
+        planes: int,
+        blocks: int,
+        stride: int = 1,
+    ):
+        norm_layer = self._norm_layer
+        strides = [stride] + [1] * (blocks - 1)
         layers = []
-        for i in range(num_blocks):
+        for i in range(blocks):
             stride = strides[i]
-            layers.append(block(self.in_planes, planes, stride, i == num_blocks - 1))
+            layers.append(block(
+                inplanes=self.inplanes, planes=planes,
+                stride=stride, norm_layer=norm_layer
+            ))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x, is_feat=False, preact=False):
-        out = F.relu(self.bn1(self.conv1(x)))
-        f0 = out
-        out, f1_pre = self.layer1(out)
-        f1 = out
-        out, f2_pre = self.layer2(out)
-        f2 = out
-        out, f3_pre = self.layer3(out)
-        f3 = out
-        out, f4_pre = self.layer4(out)
-        f4 = out
-        out = self.avgpool(out)
-        out = out.view(out.size(0), -1)
-        f5 = out
-        out = self.linear(out)
-        if is_feat:
-            if preact:
-                return [[f0, f1_pre, f2_pre, f3_pre, f4_pre, f5], out]
-            else:
-                return [f0, f1, f2, f3, f4, f5], out
-        else:
-            return out
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x
 
 
 def resnet18_cl(**kwargs):
