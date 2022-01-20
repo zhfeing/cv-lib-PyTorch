@@ -1,12 +1,11 @@
 from typing import List
 
-import torch
 from torch import Tensor
 import torch.nn as nn
 from torch.nn import Sequential, ModuleList, Module
 
-from models.aux_layers import conv1x1, conv3x3, conv3x3_pad
-from models.backbones import Backbone
+from .aux_layers import conv1x1, conv3x3, conv3x3_pad
+from .backbones import Backbone
 from .sub_module import BoxPredictor
 
 

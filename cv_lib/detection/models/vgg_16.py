@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models.utils import load_state_dict_from_url
 
 from .aux_layers import L2Norm
 
@@ -71,7 +70,7 @@ extras_base = {
 
 
 class VGG16(nn.Module):
-    def __init__(self, pretrained: bool = True, img_size: int = 300):
+    def __init__(self, img_size: int = 300):
         super().__init__()
         vgg_config = vgg_base[str(img_size)]
         extras_config = extras_base[str(img_size)]
@@ -80,10 +79,6 @@ class VGG16(nn.Module):
         self.extras = nn.ModuleList(add_extras(extras_config, i=1024, size=img_size))
         self.l2_norm = L2Norm(512, scale=20)
         self.reset_parameters()
-
-        if pretrained:
-            state_dict = load_state_dict_from_url(vgg16_url, progress=True)
-            self.vgg.load_state_dict(state_dict)
 
     def reset_parameters(self):
         for m in self.extras.modules():

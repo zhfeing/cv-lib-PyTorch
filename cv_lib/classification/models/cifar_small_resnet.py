@@ -6,9 +6,7 @@ from typing import Callable, List, Union, Type
 
 import torch
 import torch.nn as nn
-from torchvision.models.resnet import conv1x1
-
-from cv_lib.detection.models.aux_layers import conv3x3
+from torchvision.models.resnet import conv1x1, conv3x3
 
 from .resnet import BasicBlock, Bottleneck
 

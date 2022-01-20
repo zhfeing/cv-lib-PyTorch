@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 import torch.nn as nn
 
-from models.aux_layers import conv3x3
+from .aux_layers import conv3x3
 
 
 __all__ = ["BoxPredictor"]
