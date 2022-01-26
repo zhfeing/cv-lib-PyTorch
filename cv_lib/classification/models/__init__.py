@@ -7,6 +7,8 @@ from .resnet import *
 from .cifar_large_resnet import *
 from .cifar_small_resnet import *
 from .wrn import *
+from timm.models.efficientnet import efficientnet_b2
+
 
 __MODEL_DICT__ = {
     # small resnet for cifar
@@ -29,6 +31,7 @@ __MODEL_DICT__ = {
     "wrn_16_2": wrn_16_2,
     "wrn_40_1": wrn_40_1,
     "wrn_40_2": wrn_40_2,
+    "efficientnet_b2": efficientnet_b2
 }
 
 

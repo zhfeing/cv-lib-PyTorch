@@ -5,7 +5,7 @@ from typing import Dict, Any, List, Tuple
 
 from torch.utils.data import Dataset
 from torchvision import transforms
-from torchvision.datasets.folder import is_image_file, pil_loader
+from torchvision.datasets.folder import is_image_file, default_loader
 
 
 class TinyImagenet:
@@ -169,7 +169,7 @@ class TinyImagenet:
             tuple: (sample, target) where target is class_index of the target class.
         """
         path, target = self.samples[index]
-        sample = pil_loader(path)
+        sample = default_loader(path)
         if self.transform is not None:
             sample = self.transform(sample)
         return sample, target
