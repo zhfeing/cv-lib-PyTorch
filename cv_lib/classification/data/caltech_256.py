@@ -35,7 +35,7 @@ class Caltech_256(ClassificationDataset):
         """
         Args:
             root: root to Caltech-256 folder
-            split: split of dataset, i.e., `train` and `test`
+            split: split of dataset, i.e., `train` and `val`
             resize: all images will be resized to given size. If `None`, all images will not be resized
         """
         super().__init__(resize, augmentations)
