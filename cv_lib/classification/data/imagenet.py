@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Tuple, Optional, Dict, Any
+from typing import Callable, Tuple, Optional, Dict, Any, List
 
 from PIL import Image
 
@@ -36,7 +36,9 @@ class ImageNet(ClassificationDataset):
         split: str = "train",
         resize: Optional[Tuple[int]] = None,
         augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None,
-        make_partial: float = None
+        make_partial: float = None,
+        dataset_mean: List[float] = MEAN,
+        dataset_std: List[float] = STD
     ):
         """
         Args:
@@ -51,12 +53,13 @@ class ImageNet(ClassificationDataset):
         self.data_folder = os.path.join(self.root, self.split)
         self.meta_folder = os.path.join(self.root, "devkit", "data")
 
+        self.dataset_mean = dataset_mean
+        self.dataset_std = dataset_std
+
         self.logger = log_utils.get_master_logger("Imagenet")
         self._init_dataset(make_partial)
 
     def _init_dataset(self, make_partial: float):
-        self.dataset_mean = MEAN
-        self.dataset_std = STD
         self.logger.info("Reading dataset folder...")
         self.instances, self.label_info, self.label_map = make_datafolder(
             self.data_folder,

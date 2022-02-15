@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, Any
+from typing import Callable, Dict, Any
 
 from torch.nn import Module
 
@@ -7,7 +7,6 @@ from .resnet import *
 from .cifar_large_resnet import *
 from .cifar_small_resnet import *
 from .wrn import *
-from timm.models.efficientnet import efficientnet_b2
 
 
 __MODEL_DICT__ = {
@@ -30,9 +29,12 @@ __MODEL_DICT__ = {
     "wrn_16_1": wrn_16_1,
     "wrn_16_2": wrn_16_2,
     "wrn_40_1": wrn_40_1,
-    "wrn_40_2": wrn_40_2,
-    "efficientnet_b2": efficientnet_b2
+    "wrn_40_2": wrn_40_2
 }
+
+
+def register_model(name: str, model_fn: Callable[[], Module]):
+    __MODEL_DICT__[name] = model_fn
 
 
 def get_model(model_cfg: Dict[str, Any], num_classes: int):
