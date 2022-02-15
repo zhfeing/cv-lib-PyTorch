@@ -9,18 +9,14 @@ class Transformer(nn.Module):
         self,
         encoder_layer_gen: Callable[[], nn.Module],
         depth: int = 12,
-        num_heads: int = 8,
         embed_dim: int = 512,
-        dim_feedforward: int = 2048,
         final_norm: bool = True,
         norm_eps: float = 1.0e-5,
         pre_norm: bool = True
     ):
         super().__init__()
         self.depth = depth
-        self.num_heads = num_heads
         self.embed_dim = embed_dim
-        self.dim_feedforward = dim_feedforward
         self.pre_norm = pre_norm
 
         self.norm = nn.LayerNorm(embed_dim, eps=norm_eps) if final_norm else None

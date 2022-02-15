@@ -9,20 +9,7 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import conv1x1, conv3x3
 
-
-__all__ = [
-    "ResNet",
-    "resnet10",
-    "resnet18",
-    "resnet34",
-    "resnet50",
-    "resnet101",
-    "resnet152",
-    "resnext50_32x4d",
-    "resnext101_32x8d",
-    "wide_resnet50_2",
-    "wide_resnet101_2"
-]
+from . import register_models
 
 
 class BasicBlock(nn.Module):
@@ -281,3 +268,19 @@ def wide_resnet50_2(**kwargs):
 def wide_resnet101_2(**kwargs):
     kwargs["width_per_group"] = 64 * 2
     return ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+
+
+MODEL_DICT = {
+    # ResNet for large scale dataset
+    "ResNet10": resnet10,
+    "ResNet18": resnet18,
+    "ResNet34": resnet34,
+    "ResNet50": resnet50,
+    "ResNet101": resnet101,
+    "ResNet152": resnet152,
+    "resnext50_32x4d": resnext50_32x4d,
+    "resnext101_32x8d": resnext101_32x8d,
+    "wide_resnet50_2": wide_resnet50_2,
+    "wide_resnet101_2": wide_resnet101_2,
+}
+register_models(MODEL_DICT)
