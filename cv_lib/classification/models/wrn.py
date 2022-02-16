@@ -6,8 +6,6 @@ import torch.nn as nn
 
 from torchvision.models.resnet import conv1x1, conv3x3
 
-from . import register_models
-
 
 class BasicBlock(nn.Module):
     def __init__(
@@ -178,4 +176,3 @@ MODEL_DICT = {
     "wrn_16_2": wrn_16_2,
     "wrn_16_1": wrn_16_1,
 }
-register_models(MODEL_DICT)

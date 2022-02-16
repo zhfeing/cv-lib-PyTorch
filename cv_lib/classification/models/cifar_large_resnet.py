@@ -9,7 +9,6 @@ import torch.nn as nn
 from torchvision.models.resnet import conv1x1, conv3x3
 
 from .resnet import BasicBlock, Bottleneck
-from . import register_models
 
 
 class BasicBlock_CL(BasicBlock):
@@ -170,4 +169,3 @@ MODEL_DICT = {
     "ResNet101_cl": resnet101_cl,
     "ResNet152_cl": resnet152_cl,
 }
-register_models(MODEL_DICT)

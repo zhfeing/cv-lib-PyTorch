@@ -9,8 +9,6 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import conv1x1, conv3x3
 
-from . import register_models
-
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -283,4 +281,3 @@ MODEL_DICT = {
     "wide_resnet50_2": wide_resnet50_2,
     "wide_resnet101_2": wide_resnet101_2,
 }
-register_models(MODEL_DICT)

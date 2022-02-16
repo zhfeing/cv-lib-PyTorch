@@ -3,6 +3,11 @@ from typing import Callable, Dict, Any
 
 from torch.nn import Module
 
+from .cifar_large_resnet import MODEL_DICT as cl_models
+from .cifar_small_resnet import MODEL_DICT as cs_models
+from .resnet import MODEL_DICT as resnets
+from .wrn import MODEL_DICT as wrns
+
 
 __MODEL_DICT__ = {}
 
@@ -25,3 +30,8 @@ def get_model(model_cfg: Dict[str, Any], num_classes: int):
     model: Module = __MODEL_DICT__[name](num_classes=num_classes, **model_cfg)
     return model
 
+
+register_models(cl_models)
+register_models(cs_models)
+register_models(resnets)
+register_models(wrns)
