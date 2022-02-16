@@ -6,14 +6,7 @@ import torch.nn as nn
 
 from torchvision.models.resnet import conv1x1, conv3x3
 
-
-__all__ = [
-    "WideResNet",
-    "wrn_40_2",
-    "wrn_40_1",
-    "wrn_16_2",
-    "wrn_16_1"
-]
+from . import register_models
 
 
 class BasicBlock(nn.Module):
@@ -178,3 +171,11 @@ def wrn_16_2(**kwargs):
 def wrn_16_1(**kwargs):
     return WideResNet(BasicBlock, depth=16, widen_factor=1, **kwargs)
 
+
+MODEL_DICT = {
+    "wrn_40_2": wrn_40_2,
+    "wrn_40_1": wrn_40_1,
+    "wrn_16_2": wrn_16_2,
+    "wrn_16_1": wrn_16_1,
+}
+register_models(MODEL_DICT)

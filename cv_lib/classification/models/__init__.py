@@ -1,38 +1,21 @@
 from copy import deepcopy
-from typing import Dict, Any
+from typing import Callable, Dict, Any
 
 from torch.nn import Module
 
-from .resnet import *
-from .cifar_large_resnet import *
-from .cifar_small_resnet import *
-from .wrn import *
-from timm.models.efficientnet import efficientnet_b2
+
+__MODEL_DICT__ = {}
 
 
-__MODEL_DICT__ = {
-    # small resnet for cifar
-    "resnet20_cs": resnet20_cs,
-    "resnet32_cs": resnet32_cs,
-    "resnet56_cs": resnet56_cs,
-    # large ResNet for cifar
-    "ResNet18_cl": resnet18_cl,
-    "ResNet34_cl": resnet34_cl,
-    "ResNet50_cl": resnet50_cl,
-    # ResNet for large scale dataset
-    "ResNet10": resnet10,
-    "ResNet18": resnet18,
-    "ResNet34": resnet34,
-    "ResNet50": resnet50,
-    "ResNet101": resnet101,
-    "ResNet152": resnet152,
-    # wide resnet
-    "wrn_16_1": wrn_16_1,
-    "wrn_16_2": wrn_16_2,
-    "wrn_40_1": wrn_40_1,
-    "wrn_40_2": wrn_40_2,
-    "efficientnet_b2": efficientnet_b2
-}
+def register_model(name: str, model_fn: Callable[[], Module]):
+    assert name not in __MODEL_DICT__, f"model {name} already exists"
+    __MODEL_DICT__[name] = model_fn
+
+
+def register_models(models: Dict[str, Callable[[], Module]]):
+    intersection = __MODEL_DICT__.keys() & models
+    assert len(intersection) == 0, f"model {intersection} already exists"
+    __MODEL_DICT__.update(models)
 
 
 def get_model(model_cfg: Dict[str, Any], num_classes: int):

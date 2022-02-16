@@ -9,16 +9,7 @@ import torch.nn as nn
 from torchvision.models.resnet import conv1x1, conv3x3
 
 from .resnet import BasicBlock, Bottleneck
-
-
-__all__ = [
-    "ResNet_CL",
-    "resnet18_cl",
-    "resnet34_cl",
-    "resnet50_cl",
-    "resnet101_cl",
-    "resnet152_cl"
-]
+from . import register_models
 
 
 class BasicBlock_CL(BasicBlock):
@@ -170,3 +161,13 @@ def resnet101_cl(**kwargs):
 def resnet152_cl(**kwargs):
     return ResNet_CL(Bottleneck, [3, 8, 36, 3], **kwargs)
 
+
+MODEL_DICT = {
+    # large ResNet for cifar
+    "ResNet18_cl": resnet18_cl,
+    "ResNet34_cl": resnet34_cl,
+    "ResNet50_cl": resnet50_cl,
+    "ResNet101_cl": resnet101_cl,
+    "ResNet152_cl": resnet152_cl,
+}
+register_models(MODEL_DICT)
