@@ -72,7 +72,8 @@ def resize(
     img: Image,
     target: Dict[str, Any],
     size: Union[int, Tuple[int, int]],
-    max_size=None
+    max_size=None,
+    interpolation_mode: TF.InterpolationMode = TF.InterpolationMode.BILINEAR,
 ) -> Tuple[Image, Dict[str, Any]]:
     """
     Args:
@@ -106,7 +107,7 @@ def resize(
             return get_size_with_aspect_ratio(image_size, size, max_size)
 
     size = get_size(img.size, size, max_size)
-    img = TF.resize(img, size)
+    img = TF.resize(img, size, interpolation=interpolation_mode)
 
     if "size" in target:
         target["size"] = tuple(size)

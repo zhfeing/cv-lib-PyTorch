@@ -182,15 +182,20 @@ class CenterCrop(BaseTransform):
 
 
 class Resize(BaseTransform):
-    def __init__(self, size: Union[int, Tuple[int, int]]):
+    def __init__(
+        self,
+        size: Union[int, Tuple[int, int]],
+        mode: TF.InterpolationMode = TF.InterpolationMode.BILINEAR
+    ):
         self.size = size
+        self.mode = mode
 
     def __call__(
         self,
         img: Image,
         target: Dict[str, Any]
     ) -> Tuple[Image, Dict[str, Any]]:
-        return resize(img, target, self.size)
+        return resize(img, target, self.size, interpolation_mode=self.mode)
 
 
 class RandomResize(BaseTransform):
