@@ -10,6 +10,7 @@ from .imagenet import ImageNet
 from .caltech_256 import Caltech_256
 from .sketches import Sketches
 from .stanford_cars import StanfordCars
+from .cub_200 import CUB_200
 
 
 __REGISTERED_DATASETS__ = {
@@ -19,7 +20,8 @@ __REGISTERED_DATASETS__ = {
     "imagenet": ImageNet,
     "caltech_256": Caltech_256,
     "sketches": Sketches,
-    "stanford_cars": StanfordCars
+    "stanford_cars": StanfordCars,
+    "cub_200": CUB_200
 }
 
 
