@@ -3,7 +3,7 @@ import argparse
 
 
 def rm_ckpts(ckpt_dir: str, test: bool, perserve_first: bool):
-    for dirpath, _, filenames in os.walk(ckpt_dir):
+    for dirpath, _, filenames in os.walk(ckpt_dir, followlinks=True):
         if "best.pth" in filenames:
             print("\nIn dir:", dirpath)
             filenames.sort()
