@@ -7,10 +7,13 @@ from torchvision.datasets.folder import is_image_file
 from cv_lib.utils import random_pick_instances
 
 
-def make_datafolder(data_folder: str, make_partial: float = None):
+def make_datafolder(data_folder: str, make_partial: float = None, manual_classes: List[str] = None):
     # get classes and class map
-    classes = [d.name for d in os.scandir(data_folder) if d.is_dir()]
-    classes.sort()
+    if manual_classes:
+        classes = manual_classes
+    else:
+        classes = [d.name for d in os.scandir(data_folder) if d.is_dir()]
+        classes.sort()
     label_map: OrderedDict[str, int] = collections.OrderedDict()
     label_info: OrderedDict[int, str] = collections.OrderedDict()
     for i, cls_name in enumerate(classes):

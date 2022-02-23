@@ -1,7 +1,8 @@
 import os
-from typing import Callable, Tuple, Optional, Dict, Any
+from typing import Callable, Tuple, Optional, Dict, Any, List
 
 from PIL import Image
+import pandas as pd
 
 import torch
 from torchvision.datasets.utils import verify_str_arg
@@ -36,13 +37,15 @@ class ImageNet(ClassificationDataset):
         split: str = "train",
         resize: Optional[Tuple[int]] = None,
         augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None,
-        make_partial: float = None
+        make_partial: float = None,
+        manual_classes_fp: str = None,
     ):
         """
         Args:
             root: root to Imagenet folder
             split: split of dataset, i.e., `train` and `val`
             resize: all images will be resized to given size. If `None`, all images will not be resized
+            manual_classes_fp: csv file with all manual classes in a column with name "classes"
         """
         super().__init__(resize, augmentations)
         self.root = os.path.expanduser(root)
@@ -52,15 +55,21 @@ class ImageNet(ClassificationDataset):
         self.meta_folder = os.path.join(self.root, "devkit", "data")
 
         self.logger = log_utils.get_master_logger("Imagenet")
-        self._init_dataset(make_partial)
 
-    def _init_dataset(self, make_partial: float):
+        classes = None
+        if manual_classes_fp:
+            df = pd.read_csv(manual_classes_fp)
+            classes = list(df["classes"])
+        self._init_dataset(make_partial, classes)
+
+    def _init_dataset(self, make_partial: float, manual_classes: List[str]):
         self.dataset_mean = MEAN
         self.dataset_std = STD
         self.logger.info("Reading dataset folder...")
         self.instances, self.label_info, self.label_map = make_datafolder(
             self.data_folder,
-            make_partial
+            make_partial,
+            manual_classes
         )
 
     def __len__(self):
@@ -75,3 +84,4 @@ class ImageNet(ClassificationDataset):
         label = self.instances[index][1]
         annot = dict(label=torch.tensor(label))
         return annot
+
