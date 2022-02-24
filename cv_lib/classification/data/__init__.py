@@ -45,7 +45,7 @@ def get_dataset(
     # Setup Dataloader
     dataset_cfg = copy.deepcopy(dataset_cfg)
     name = dataset_cfg.pop("name")
-    name = name.split("/")[0]
+    name = name.split("=")[0]
     dataset = __REGISTERED_DATASETS__[name]
     root = dataset_cfg.pop("root")
     train_cfg = dataset_cfg.pop("train")
