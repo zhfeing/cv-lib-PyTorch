@@ -19,7 +19,7 @@ def vis_featuremap(
     scale_each: bool = False,
     save_fp: str = None,
     n_row: int = None,
-    **kwargs
+    **grid_kwargs
 ) -> torch.Tensor:
     """
     Visualize featuremap of CNN
@@ -46,7 +46,7 @@ def vis_featuremap(
         padding=padding,
         normalize=True,
         scale_each=scale_each,
-        **kwargs
+        **grid_kwargs
     )
     if save_fp is not None:
         gird_img_ = TF.to_pil_image(gird_img)
