@@ -8,6 +8,8 @@ def rm_ckpts(ckpt_dir: str, test: bool, perserve_first: bool):
             print("\nIn dir:", dirpath)
             filenames.sort()
             filenames.pop(0)
+        if len(filenames) == 0:
+            return
         assert "best.pth" not in filenames
         iters = list(int(a.split("-")[1][:-4]) for a in filenames)
         iters.sort()
