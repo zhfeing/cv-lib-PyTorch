@@ -44,7 +44,7 @@ def vis_featuremap(
         tensor=feat,
         nrow=n_row,
         padding=padding,
-        normalize=True,
+        normalize=False,
         scale_each=scale_each,
         **grid_kwargs
     )
