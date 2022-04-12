@@ -9,6 +9,7 @@ import pickle
 import numpy as np
 
 import torch
+import torch.nn as nn
 from torchvision.datasets.folder import IMG_EXTENSIONS
 from torchvision.datasets.folder import has_file_allowed_extension
 
@@ -84,9 +85,9 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Unsupported value encountered.")
 
 
-def count_parameters(model, include_no_grad: bool = False):
+def count_parameters(model: nn.Module, include_no_grad: bool = False):
     if include_no_grad:
-        return sum(p.numel() for p in model.parameters())
+        return sum(p.numel() for p in model.state_dict().values())
     else:
         return sum(p.numel() for p in model.parameters() if p.requires_grad)
 

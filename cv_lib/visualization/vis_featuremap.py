@@ -17,9 +17,8 @@ def vis_featuremap(
     n_sigma: float = 3,
     padding: int = 1,
     scale_each: bool = False,
-    save_fp: str = None,
     n_row: int = None,
-    **kwargs
+    **grid_kwargs
 ) -> torch.Tensor:
     """
     Visualize featuremap of CNN
@@ -44,13 +43,9 @@ def vis_featuremap(
         tensor=feat,
         nrow=n_row,
         padding=padding,
-        normalize=True,
         scale_each=scale_each,
-        **kwargs
+        **grid_kwargs
     )
-    if save_fp is not None:
-        gird_img_ = TF.to_pil_image(gird_img)
-        gird_img_.save(save_fp)
     return gird_img
 
 
@@ -60,7 +55,6 @@ def vis_seq_token(
     n_sigma: float = 3,
     padding: int = 1,
     scale_each: bool = False,
-    save_fp: str = None,
     n_row: int = None,
     **vis_kwargs
 ) -> torch.Tensor:
@@ -78,11 +72,10 @@ def vis_seq_token(
     # make seq to [dim, W, H]
     seq = seq.permute(1, 0).unflatten(dim=-1, sizes=feat_shape)
     res = vis_featuremap(
-        seq,
-        n_sigma,
-        padding,
-        scale_each,
-        save_fp,
+        feat=seq,
+        n_sigma=n_sigma,
+        padding=padding,
+        scale_each=scale_each,
         n_row=n_row,
         **vis_kwargs
     )
