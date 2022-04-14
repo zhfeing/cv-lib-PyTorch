@@ -35,6 +35,7 @@ class MNIST(ClassificationDataset):
         """
         super().__init__(resize, augmentations)
         verify_str_arg(split, "split", ("train", "test"))
+        self.img_channels = 1
 
         self.logger = log_utils.get_master_logger("MNIST")
         self.split = split

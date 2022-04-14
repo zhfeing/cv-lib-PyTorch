@@ -34,6 +34,7 @@ class ClassificationDataset(Dataset):
         self.label_info: OrderedDict[int, str] = collections.OrderedDict()
         self.dataset_mean: List[float] = None
         self.dataset_std: List[float] = None
+        self.img_channels: int = 3
 
     @property
     def n_classes(self) -> int:

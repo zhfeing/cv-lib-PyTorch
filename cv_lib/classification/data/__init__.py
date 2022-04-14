@@ -1,8 +1,6 @@
 import copy
 from typing import Dict, Any, Callable, Tuple
 
-from torch.utils.data import Dataset
-
 from .classification_dataset import ClassificationDataset
 from .mnist import MNIST
 from .cifar import CIFAR_10, CIFAR_100
@@ -67,4 +65,5 @@ def get_dataset(
 
     assert train_dataset.n_classes == val_dataset.n_classes
     n_classes = train_dataset.n_classes
-    return train_dataset, val_dataset, n_classes
+    img_channels = train_dataset.img_channels
+    return train_dataset, val_dataset, n_classes, img_channels
