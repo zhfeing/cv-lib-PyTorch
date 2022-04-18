@@ -39,7 +39,7 @@ class CIFAR_10(ClassificationDataset):
         self.cifar = torchvision.datasets.CIFAR10(
             root=self.root,
             train=self.split == "train",
-            download=True
+            download=False
         )
         self._init_dataset()
 
@@ -87,7 +87,7 @@ class CIFAR_100(ClassificationDataset):
         self.cifar = torchvision.datasets.CIFAR100(
             root=self.root,
             train=self.split == "train",
-            download=True
+            download=False
         )
         self._init_dataset()
 
