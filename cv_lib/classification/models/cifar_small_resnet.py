@@ -87,6 +87,7 @@ class ResNet_CS(nn.Module):
         self.layer2 = self._make_layer(block, num_filters[2], n, stride=2)
         self.layer3 = self._make_layer(block, num_filters[3], n, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.flatten = nn.Flatten(1)
         self.fc = nn.Linear(num_filters[3] * block.expansion, num_classes)
 
         self._init_parameters(zero_init_residual)
@@ -148,7 +149,7 @@ class ResNet_CS(nn.Module):
         x = self.layer3(x)  # 8x8
 
         x = self.avgpool(x)
-        x = torch.flatten(x, 1)
+        x = self.flatten(x)
         x = self.fc(x)
 
         return x

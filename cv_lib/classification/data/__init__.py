@@ -27,7 +27,7 @@ def get_dataset(
     dataset_cfg: Dict[str, Any],
     train_augmentations: Callable,
     val_augmentations: Callable
-) -> Tuple[ClassificationDataset, ClassificationDataset, int]:
+) -> Tuple[ClassificationDataset, ClassificationDataset, int, int]:
     """
     dataset_cfg:
         {
