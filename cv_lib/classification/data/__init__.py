@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, Any, Callable, Tuple
+from typing import Dict, Any, Callable, Tuple, Optional
 
 from .classification_dataset import ClassificationDataset
 from .mnist import MNIST
@@ -27,8 +27,8 @@ __REGISTERED_DATASETS__ = {
 
 def get_dataset(
     dataset_cfg: Dict[str, Any],
-    train_augmentations: Callable,
-    val_augmentations: Callable
+    train_augmentations: Optional[Callable] = None,
+    val_augmentations: Optional[Callable] = None
 ) -> Tuple[ClassificationDataset, ClassificationDataset, int, int]:
     """
     dataset_cfg:

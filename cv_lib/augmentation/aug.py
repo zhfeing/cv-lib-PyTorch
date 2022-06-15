@@ -51,7 +51,10 @@ class BaseTransform(abc.ABC):
 class Compose(BaseTransform):
     def __init__(self, *transforms):
         super().__init__()
-        self.transforms = transforms
+        self.transforms: List[BaseTransform] = list(transforms)
+
+    def append(self, transform: BaseTransform):
+        self.transforms.append(transform)
 
     def __call__(
         self,
