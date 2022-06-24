@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Callable, Dict, Tuple, List, Any, Optional, Union, OrderedDict
 import collections
 
@@ -20,14 +21,18 @@ class ClassificationDataset(Dataset):
         `dataset_std`: List[float]
     """
     def __init__(
-            self,
-            resize: Optional[Tuple[int]] = (224, 224),
-            augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
+        self,
+        resize: Optional[Tuple[int]] = (224, 224),
+        augmentations: Callable[[Image, Dict[str, Any]], Tuple[Image, Dict[str, Any]]] = None,
     ):
         """
         resize: (h, w)
         """
-        self.resize = tuple(resize) if isinstance(resize, list) else resize
+        if isinstance(resize, list):
+            resize = tuple(resize)
+        elif isinstance(resize, Number):
+            resize = (resize, resize)
+        self.resize = resize
         self.augmentations = augmentations
 
         self.label_map: OrderedDict[str, int] = collections.OrderedDict()
