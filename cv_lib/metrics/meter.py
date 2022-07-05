@@ -54,25 +54,30 @@ class AverageMeter(Meter):
     """
     def __init__(self):
         self.values: List[Tensor] = list()
+        self.num: List[int] = list()
         self.value_accumulated: Tensor = None
 
     def reset(self):
         self.values.clear()
+        self.num.clear()
         self.value_accumulated = None
 
-    def update(self, val: Tensor):
-        self.values.append(val.to("cpu"))
+    def update(self, val: Tensor, n: int = 1):
+        self.values.append(val.to("cpu") * n)
+        self.num.append(n)
 
     def sync(self):
         assert self.value_accumulated is not None, "`self.sync` must be called after `self.accumulate`"
-        self.value_accumulated = dist_utils.reduce_tensor(self.value_accumulated, average=True)
+        self.value_accumulated = dist_utils.reduce_tensor(self.value_accumulated, average=False)
+        self.num_accumulated = dist_utils.reduce_tensor(self.num_accumulated, average=False)
 
     def accumulate(self):
-        self.value_accumulated = torch.stack(self.values)
+        self.value_accumulated = torch.stack(self.values).sum()
+        self.num_accumulated = torch.tensor(self.num).sum()
 
     def value(self):
         assert self.value_accumulated is not None, "`self.value` must be called after `self.accumulate`"
-        return self.value_accumulated.mean(dim=0)
+        return self.value_accumulated / self.num_accumulated
 
 
 class DictAverageMeter(Meter):
@@ -86,9 +91,9 @@ class DictAverageMeter(Meter):
     def reset(self):
         self.average_meters.clear()
 
-    def update(self, val: Dict[str, Union[float, Tensor]]):
+    def update(self, val: Dict[str, Union[float, Tensor]], n: int = 1):
         for k, v in val.items():
-            self.average_meters[k].update(v)
+            self.average_meters[k].update(v, n)
 
     def sync(self):
         for v in self.average_meters.values():
