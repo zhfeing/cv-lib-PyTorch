@@ -8,6 +8,7 @@ from .cifar_small_resnet import MODEL_DICT as cs_models
 from .resnet import MODEL_DICT as resnets
 from .wrn import MODEL_DICT as wrns
 from .vgg import MODEL_DICT as vggs
+from .alexnet import MODEL_DICT as alexnets
 
 
 __MODEL_DICT__ = {}
@@ -37,3 +38,4 @@ register_models(cs_models)
 register_models(resnets)
 register_models(wrns)
 register_models(vggs)
+register_models(alexnets)

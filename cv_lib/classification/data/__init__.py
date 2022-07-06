@@ -2,7 +2,7 @@ import copy
 from typing import Dict, Any, Callable, Tuple, Optional
 
 from .classification_dataset import ClassificationDataset
-from .mnist import MNIST
+from .mnist import MNIST, FashionMNIST
 from .cifar import CIFAR_10, CIFAR_100
 from .imagenet import ImageNet
 from .caltech_256 import Caltech_256
@@ -14,6 +14,7 @@ from .prob_dataset import ProbDatset
 
 __REGISTERED_DATASETS__ = {
     "mnist": MNIST,
+    "fashion_mnist": FashionMNIST,
     "cifar_10": CIFAR_10,
     "cifar_100": CIFAR_100,
     "imagenet": ImageNet,
