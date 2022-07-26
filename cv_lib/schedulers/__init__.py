@@ -40,7 +40,7 @@ def get_scheduler(optimizer, scheduler_cfg: Dict[str, Dict[str, Any]]):
 
     if "warmup_iters" in scheduler_dict:
         warmup_dict = {}
-        warmup_dict["warmup_iters"] = scheduler_dict.pop("warmup_iters", 100)
+        warmup_dict["warmup_iters"] = scheduler_dict.pop("warmup_iters")
         warmup_dict["mode"] = scheduler_dict.pop("warmup_mode", "linear")
         warmup_dict["gamma"] = scheduler_dict.pop("warmup_factor", 0.2)
 
