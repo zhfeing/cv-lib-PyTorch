@@ -10,6 +10,7 @@ from .sketches import Sketches
 from .stanford_cars import StanfordCars
 from .cub_200 import CUB_200
 from .prob_dataset import ProbDatset
+from .caltech_101 import Caltech_101
 
 
 __REGISTERED_DATASETS__ = {
@@ -22,7 +23,8 @@ __REGISTERED_DATASETS__ = {
     "sketches": Sketches,
     "stanford_cars": StanfordCars,
     "cub_200": CUB_200,
-    "prob_dataset": ProbDatset
+    "prob_dataset": ProbDatset,
+    "caltech_101": Caltech_101
 }
 
 
