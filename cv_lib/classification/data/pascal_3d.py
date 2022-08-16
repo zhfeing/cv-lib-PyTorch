@@ -2,6 +2,7 @@ import os
 from typing import Callable, Tuple, Optional, Dict, Any
 
 from PIL import Image
+import pandas as pd
 
 import torch
 from torchvision.datasets.utils import verify_str_arg
@@ -14,27 +15,25 @@ from .imagenet import MEAN, STD
 from .utils import make_datafolder
 
 
-class Caltech_256(ClassificationDataset):
+class Pascal3D(ClassificationDataset):
     """
     Image folder:
-        ├── train
-        │   ├── 001.ak47
-        │       ├── 001_0002.jpg
-        |   |   ├── ...
-        │   ├── 002.american-flag
-        │   ├── ...
-        ├── val
+        ├── aeroplane_{pascal,xxx}
+        ├── boat_{pascal,xxx}
+        ...
     """
     def __init__(
         self,
         root: str,
         split: str = "train",
         resize: Optional[Tuple[int]] = None,
-        augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None
+        augmentations: Callable[[Image.Image, Dict[str, Any]], Tuple[Image.Image, Dict[str, Any]]] = None,
+        make_partial: float = None,
+        manual_classes_fp: str = None,
     ):
         """
         Args:
-            root: root to Caltech-256 folder
+            root: root to Caltech_101 folder
             split: split of dataset, i.e., `train` and `val`
             resize: all images will be resized to given size. If `None`, all images will not be resized
         """
@@ -43,14 +42,23 @@ class Caltech_256(ClassificationDataset):
         verify_str_arg(split, "split", ("train", "val"))
         self.split = split
         self.data_folder = os.path.join(self.root, self.split)
-        self.logger = log_utils.get_master_logger("Caltech_256")
-        self._init_dataset()
+        self.logger = log_utils.get_master_logger("Pascal3D")
 
-    def _init_dataset(self):
+        classes = None
+        if manual_classes_fp:
+            df = pd.read_csv(manual_classes_fp)
+            classes = list(df["classes"])
+        self._init_dataset(make_partial, classes)
+
+    def _init_dataset(self, make_partial, manual_classes):
         self.dataset_mean = MEAN
         self.dataset_std = STD
         self.logger.info("Reading dataset folder...")
-        self.instances, self.label_info, self.label_map = make_datafolder(self.data_folder)
+        self.instances, self.label_info, self.label_map = make_datafolder(
+            self.data_folder,
+            make_partial,
+            manual_classes
+        )
 
     def __len__(self):
         return len(self.instances)

@@ -46,7 +46,7 @@ class Caltech_101(ClassificationDataset):
         verify_str_arg(split, "split", ("train", "test"))
         self.split = split
         self.data_folder = os.path.join(self.root, self.split)
-        self.logger = log_utils.get_master_logger("Sketches")
+        self.logger = log_utils.get_master_logger("Caltech_101")
 
         classes = None
         if manual_classes_fp:

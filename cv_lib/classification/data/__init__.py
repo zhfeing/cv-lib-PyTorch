@@ -5,12 +5,13 @@ from .classification_dataset import ClassificationDataset
 from .mnist import MNIST, FashionMNIST
 from .cifar import CIFAR_10, CIFAR_100
 from .imagenet import ImageNet
-from .caltech_256 import Caltech_256
 from .sketches import Sketches
 from .stanford_cars import StanfordCars
 from .cub_200 import CUB_200
 from .prob_dataset import ProbDatset
 from .caltech_101 import Caltech_101
+from .pascal_3d import Pascal3D
+from .food_101 import Food_101
 
 
 __REGISTERED_DATASETS__ = {
@@ -19,12 +20,13 @@ __REGISTERED_DATASETS__ = {
     "cifar_10": CIFAR_10,
     "cifar_100": CIFAR_100,
     "imagenet": ImageNet,
-    "caltech_256": Caltech_256,
     "sketches": Sketches,
     "stanford_cars": StanfordCars,
     "cub_200": CUB_200,
     "prob_dataset": ProbDatset,
-    "caltech_101": Caltech_101
+    "caltech_101": Caltech_101,
+    "pascal3D": Pascal3D,
+    "food_101": Food_101
 }
 
 

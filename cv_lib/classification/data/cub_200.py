@@ -59,7 +59,7 @@ class CUB_200(ClassificationDataset):
         )
         for label, row in classes.iterrows():
             self.label_info[label] = row["name"]
-            self.label_map["name"] = label
+            self.label_map[row["name"]] = label
 
         images = pd.read_csv(
             os.path.join(self.root, "images.txt"),
