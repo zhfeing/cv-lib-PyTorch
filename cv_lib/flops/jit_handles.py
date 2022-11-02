@@ -22,7 +22,8 @@ __all__ = [
     "conv_flop_jit",
     "einsum_flop_jit",
     "matmul_flop_jit",
-    "batchnorm_flop_jit",
+    "norm_flop_jit",
+    "linear_flop_jit"
 ]
 
 
@@ -296,7 +297,7 @@ def matmul_flop_jit(
     return flop_counter
 
 
-def batchnorm_flop_jit(
+def norm_flop_jit(
     inputs: typing.List[object], outputs: typing.List[object]
 ) -> typing.Counter[str]:
     """
@@ -313,6 +314,28 @@ def batchnorm_flop_jit(
     # Inputs[0] contains the shape of the input.
     input_shape = get_shape(inputs[0])
     assert 2 <= len(input_shape) <= 5
-    flop = prod(input_shape) * 4
-    flop_counter = Counter({"batchnorm": flop})
+    flop = prod(input_shape) * 2
+    flop_counter = Counter({"norm": flop})
+    return flop_counter
+
+
+def linear_flop_jit(
+    inputs: typing.List[object], outputs: typing.List[object]
+) -> typing.Counter[str]:
+    """
+    This method counts the flops for linear.
+    Args:
+        inputs (list(torch._C.Value)): The input shape in the form of a list of
+            jit object before batch norm.
+        outputs (list(torch._C.Value)): The output shape in the form of a list
+            of jit object after batch norm.
+    Returns:
+        Counter: A Counter dictionary that records the number of flops for each
+            operation.
+    """
+    # Inputs[0] contains the shape of the input.
+    input_shape = get_shape(inputs[0])
+    weight_shape = get_shape(inputs[1])
+    flop = prod(input_shape[:-1]) * prod(weight_shape)
+    flop_counter = Counter({"linear": flop})
     return flop_counter

@@ -22,7 +22,8 @@ _SUPPORTED_OPS: typing.Dict[str, typing.Callable] = {
     "aten::_convolution": conv_flop_jit,
     "aten::einsum": einsum_flop_jit,
     "aten::matmul": matmul_flop_jit,
-    "aten::batch_norm": batchnorm_flop_jit,
+    "aten::batch_norm": norm_flop_jit,
+    "aten::layer_norm": norm_flop_jit,
     "aten::bmm": bmm_flop_jit,
     "aten::add": partial(basic_binary_op_flop_jit, name='aten::add'),
     "aten::add_": partial(basic_binary_op_flop_jit, name='aten::add_'),
@@ -31,10 +32,14 @@ _SUPPORTED_OPS: typing.Dict[str, typing.Callable] = {
     "aten::div": partial(basic_binary_op_flop_jit, name='aten::div'),
     "aten::floor_divide": partial(basic_binary_op_flop_jit, name='aten::floor_divide'),
     "aten::relu": partial(basic_binary_op_flop_jit, name='aten::relu'),
-    "aten::relu_": partial(basic_binary_op_flop_jit, name='aten::relu_'),
+    "aten::relu_": partial(basic_binary_op_flop_jit, name='aten::relu'),
+    "aten::gelu": partial(basic_binary_op_flop_jit, name='aten::gelu'),
+    "aten::gelu_": partial(basic_binary_op_flop_jit, name='aten::gelu'),
+    "aten::pow": partial(basic_binary_op_flop_jit, name='aten::pow'),
     "aten::rsqrt": rsqrt_flop_jit,
     "aten::softmax": softmax_flop_jit,
     "aten::dropout": dropout_flop_jit,
+    "aten::linear": linear_flop_jit
 }
 
 

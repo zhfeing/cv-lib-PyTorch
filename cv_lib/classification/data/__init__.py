@@ -12,6 +12,7 @@ from .prob_dataset import ProbDatset
 from .caltech_101 import Caltech_101
 from .pascal_3d import Pascal3D
 from .food_101 import Food_101
+from .mini_imagenet import MiniImagenet
 
 
 __REGISTERED_DATASETS__ = {
@@ -26,7 +27,8 @@ __REGISTERED_DATASETS__ = {
     "prob_dataset": ProbDatset,
     "caltech_101": Caltech_101,
     "pascal3D": Pascal3D,
-    "food_101": Food_101
+    "food_101": Food_101,
+    "mini_imagenet": MiniImagenet
 }
 
 
@@ -74,3 +76,7 @@ def get_dataset(
     n_classes = train_dataset.n_classes
     img_channels = train_dataset.img_channels
     return train_dataset, val_dataset, n_classes, img_channels
+
+
+def register_dataset(name: str, dataset: type):
+    __REGISTERED_DATASETS__[name] = dataset
