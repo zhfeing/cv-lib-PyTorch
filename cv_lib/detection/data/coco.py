@@ -61,6 +61,7 @@ class CocoDetection(DetectionDataset):
         if keep_percent is not None:
             self.logger.info("Reduce COCO {} dataset to %{:.2f}".format(split, keep_percent))
             self._keep_percent(keep_percent)
+        self.samples = None
 
     def _keep_percent(self, keep_percent: float):
         n_total = len(self.image_ids)

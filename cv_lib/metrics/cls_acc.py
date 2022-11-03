@@ -1,10 +1,9 @@
 from typing import List
 
 import torch
-from torch import Tensor
 
 
-def accuracy(output: Tensor, target: Tensor, topk=(1,)) -> List[Tensor]:
+def accuracy(output: torch.Tensor, target: torch.Tensor, topk=(1,)) -> List[torch.Tensor]:
     """
     Computes the accuracy over the k top predictions for the specified values of k
 
@@ -12,20 +11,21 @@ def accuracy(output: Tensor, target: Tensor, topk=(1,)) -> List[Tensor]:
         output: [bs, C]
         target: [bs]
     """
+    device = output.device
     with torch.no_grad():
         if target.numel() == 0:
-            res = torch.zeros(len(topk)).tolist()
+            res = [torch.tensor(0, dtype=torch.float, device=device) for _ in topk]
             return res
 
         maxk = max(topk)
-        batch_size = target.size(0)
+        batch_size = target.shape[0]
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
+        correct = pred.eq(target.view(1, -1).expand_as(pred)).float()
 
         res = []
         for k in topk:
-            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(1.0 / batch_size))
+            correct_k = correct[:k].sum()
+            res.append(correct_k / batch_size)
         return res

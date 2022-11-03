@@ -70,6 +70,7 @@ class VOCBaseDataset(DetectionDataset):
         self.logger.info("Parsing VOC%s %s dataset...", version, split)
         self._init_dataset(make_partial)
         self.logger.info("Parsing VOC%s %s dataset done", version, split)
+        self.samples = None
 
     def _init_dataset(self, make_partial: List[int] = None):
         # path to image folder, e.g. VOC2007/train2017
@@ -197,3 +198,4 @@ class VOC0712Dataset(VOCBaseDataset):
             self.targets.extend(d.targets)
             self.file_names.extend(d.file_names)
             assert self.CLASSES == d.CLASSES, "all sub dataset must have the same `CLASSES`"
+        self.samples = None
