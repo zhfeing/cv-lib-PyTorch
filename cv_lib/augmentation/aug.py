@@ -23,6 +23,7 @@ __all__ = [
     "UnNormalize",
     "RandomCrop",
     "RandomResizedCrop",
+    "RandomSizeCrop",
     "CenterCrop",
     "RandomPadBottomRight",
     "Resize",
@@ -152,6 +153,11 @@ class RandomCrop(BaseTransform):
 
 
 class RandomResizedCrop(BaseTransform):
+    """
+    Steps:
+        1. crop a region based on scale and ratio
+        2. resize the crop to given size
+    """
     def __init__(self, size: Tuple[int, int], scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.)):
         self.size = size
         self.scale = scale
@@ -166,6 +172,25 @@ class RandomResizedCrop(BaseTransform):
         img, target = crop(img, target, region)
         img, target = resize(img, target, self.size)
         return img, target
+
+
+class RandomSizeCrop(BaseTransform):
+    """
+    Crop input image such that output width and height are between `min_size` and `max_size`
+    """
+    def __init__(self, min_size: int, max_size: int):
+        self.min_size = min_size
+        self.max_size = max_size
+
+    def __call__(
+        self,
+        img: Image,
+        target: Dict[str, Any]
+    ) -> Tuple[Image, Dict[str, Any]]:
+        w = random.randint(self.min_size, min(img.width, self.max_size))
+        h = random.randint(self.min_size, min(img.height, self.max_size))
+        region = T.RandomCrop.get_params(img, [h, w])
+        return crop(img, target, region)
 
 
 class CenterCrop(BaseTransform):
