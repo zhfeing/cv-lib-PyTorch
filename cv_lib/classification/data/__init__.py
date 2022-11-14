@@ -4,7 +4,7 @@ from typing import Dict, Any, Callable, Tuple, Optional
 from .classification_dataset import ClassificationDataset
 from .mnist import MNIST, FashionMNIST
 from .cifar import CIFAR_10, CIFAR_100
-from .imagenet import ImageNet
+from .imagenet import ImageNet, ImageNet_A, ImageNet_R
 from .sketches import Sketches
 from .stanford_cars import StanfordCars
 from .cub_200 import CUB_200
@@ -21,6 +21,8 @@ __REGISTERED_DATASETS__ = {
     "cifar_10": CIFAR_10,
     "cifar_100": CIFAR_100,
     "imagenet": ImageNet,
+    "imagenet_a": ImageNet_A,
+    "imagenet_r": ImageNet_R,
     "sketches": Sketches,
     "stanford_cars": StanfordCars,
     "cub_200": CUB_200,
