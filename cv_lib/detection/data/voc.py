@@ -78,7 +78,7 @@ class VOCBaseDataset(DetectionDataset):
         annotation_folder = os.path.join(self.root, "Annotations")
 
         if make_partial is not None:
-            make_partial.sort()
+            # make_partial.sort()
             self.CLASSES = tuple(self.CLASSES[c] for c in make_partial)
             self.logger.info("Partial VOC%s %s dataset with classes: %s", self.version, self.split, str(self.CLASSES))
 
