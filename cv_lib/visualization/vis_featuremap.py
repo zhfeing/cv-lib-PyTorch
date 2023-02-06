@@ -3,7 +3,6 @@ from math import sqrt
 
 import torch
 from torchvision.utils import make_grid
-import torchvision.transforms.functional as TF
 
 
 __all__ = [
@@ -24,11 +23,11 @@ def vis_featuremap(
     Visualize featuremap of CNN
 
     Args:
-        feat: input featuremap with shape [C, W, H]
+        feat: input featuremap with shape [C, H, W]
         n_sigma: clamp outliners as Gaussian distribution to +/- n_sigma
         save_fp: filepath for save
 
-    Return: `Tensor` with shape [3, W', H']
+    Return: `Tensor` with shape [3, H', W']
     """
     assert n_sigma > 0
     # add 0 dim
@@ -67,7 +66,7 @@ def vis_seq_token(
         n_sigma: clamp outliners as Gaussian distribution to +/- n_sigma
         save_fp: filepath for save
 
-    Return: `Tensor` with shape [3, W', H']
+    Return: `Tensor` with shape [3, H', W']
     """
     # make seq to [dim, W, H]
     seq = seq.permute(1, 0).unflatten(dim=-1, sizes=feat_shape)
