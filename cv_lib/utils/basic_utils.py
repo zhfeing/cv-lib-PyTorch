@@ -30,6 +30,7 @@ __all__ = [
     "tensor_dict_items",
     "tensor_to_list",
     "random_pick_instances",
+    "check_nan_grad"
 ]
 
 
@@ -169,3 +170,10 @@ def random_pick_instances(instances: List[Any], make_partial: float, seed: int):
     instances = instances[:n_pick]
     return instances
 
+
+def check_nan_grad(model: nn.Module) -> List[str]:
+    nan_list = []
+    for k, v in model.named_parameters():
+        if v.grad is not None and v.grad.isnan().any():
+            nan_list.append(k)
+    return nan_list
