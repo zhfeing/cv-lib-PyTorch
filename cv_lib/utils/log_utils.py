@@ -21,8 +21,8 @@ __all__ = [
 
 
 def get_root_logger(
-    level: int,
-    logger_fp: str,
+    level: int = logging.INFO,
+    logger_fp: Optional[str] = None,
     name: Optional[str] = None,
     mode: str = "w",
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

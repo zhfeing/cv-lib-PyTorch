@@ -51,8 +51,9 @@ class MultiProcessLoggerListener:
         """
         Stop listener process and join
         """
-        self._queue.put_nowait(None)
-        self.join()
+        if hasattr(self, "_queue"):
+            self._queue.put_nowait(None)
+            self.join()
 
     def join(self):
         """
