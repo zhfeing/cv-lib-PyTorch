@@ -69,12 +69,12 @@ def convert_state_dict(state_dict):
     return new_state_dict
 
 
-def make_deterministic(seed):
+def make_deterministic(seed, cudnn_deterministic: bool = True):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     # torch.set_deterministic(True)
-    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.deterministic = cudnn_deterministic
 
 
 def str2bool(v):

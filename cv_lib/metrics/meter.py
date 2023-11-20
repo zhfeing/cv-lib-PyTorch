@@ -72,12 +72,12 @@ class AverageMeter(Meter):
         self.num_accumulated = dist_utils.reduce_tensor(self.num_accumulated, average=False)
 
     def accumulate(self):
-        self.value_accumulated = torch.stack(self.values).sum()
         self.num_accumulated = torch.tensor(self.num).sum()
+        self.value_accumulated = torch.stack(self.values).float().div(self.num_accumulated).sum()
 
     def value(self):
         assert self.value_accumulated is not None, "`self.value` must be called after `self.accumulate`"
-        return self.value_accumulated / self.num_accumulated
+        return self.value_accumulated
 
 
 class DictAverageMeter(Meter):
