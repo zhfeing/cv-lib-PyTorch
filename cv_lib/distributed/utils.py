@@ -165,6 +165,7 @@ def cal_split_args(batch_size: int, n_workers: int, ngpus_per_node: int):
     Calculate batch size and number of workers when distributed training,
     For each process, it should be smaller than total configs
     """
+    assert n_workers % ngpus_per_node == 0, f"worker-gpu {n_workers}-{ngpus_per_node} number not match"
     batch_size = int(batch_size / ngpus_per_node)
     n_workers = int((n_workers + ngpus_per_node - 1) / ngpus_per_node)
     return batch_size, n_workers
