@@ -21,7 +21,7 @@ class MidExtractor:
         """
         Args:
             extract_names: the output of mid layers will be extracted
-            require_ourput: `if True`: extract output of the layer; `else`: extract input of the layer
+            require_output: `if True`: extract output of the layer; `else`: extract input of the layer
             retain_grad_names: extracted tensors will be set to retain_grad during backward propagation
         """
         self.model = model
@@ -63,6 +63,8 @@ class MidExtractor:
 
                 handle = module.register_forward_hook(forward_hook)
                 self.hooks[name] = handle
+        remain_names = set(self.extract_names).difference(set(self.hooks.keys()))
+        assert len(remain_names) == 0, f"layers: {remain_names} are not found"
 
     def _remove_hooks(self):
         for hook in self.hooks.values():
